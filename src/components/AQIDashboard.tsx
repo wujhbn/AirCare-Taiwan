@@ -20,13 +20,17 @@ interface AQIDashboardProps {
   onRefresh: () => void;
   refreshing: boolean;
   lastUpdated: string;
+  isUsingGps?: boolean;
+  gpsCoords?: { lat: number; lon: number } | null;
 }
 
 export default function AQIDashboard({
   station,
   onRefresh,
   refreshing,
-  lastUpdated
+  lastUpdated,
+  isUsingGps,
+  gpsCoords
 }: AQIDashboardProps) {
   if (!station) {
     // Elegant Skeleton Loading state
@@ -79,7 +83,16 @@ export default function AQIDashboard({
                 {station.county}
               </span>
             </div>
-            <p className="text-[10px] text-white/70 font-semibold tracking-wider">基於環境部地理測向自動分選</p>
+            <p className="text-[10px] text-white/90 font-semibold tracking-wider flex items-center gap-1">
+              {isUsingGps && gpsCoords ? (
+                <>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
+                  <span className="text-emerald-300 font-bold">📍 經緯定位：({gpsCoords.lat.toFixed(2)}°, {gpsCoords.lon.toFixed(2)}°) 附近</span>
+                </>
+              ) : (
+                "🏡 基於地區自選或內定預設"
+              )}
+            </p>
           </div>
         </div>
 

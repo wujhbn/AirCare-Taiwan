@@ -3,17 +3,19 @@
   "short_name": "AirCare",
   "description": "即時空氣品質監控 App - 掌握每一次呼吸，貼心的空氣守護者",
   "start_url": "/",
- "theme_color": "#ffffff",
-  "background_color": "#ffffff",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "icon-192x192.png",
+      "src": "/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
-      "src": "icon-512x512.png",
+      "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

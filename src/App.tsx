@@ -71,7 +71,7 @@ const STATION_COORDINATES: Record<string, { lat: number; lon: number }> = {
 
 export default function App() {
   const [stations, setStations] = useState<StationData[]>([]);
-  const [selectedStation, setSelectedStation] = useState<StationData | null>(null);
+  const [selectedStationName, setSelectedStationName] = useState<string>("板橋");
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<"dashboard" | "cities" | "trends" | "alerts">("dashboard");
   const [lastUpdated, setLastUpdated] = useState<string>("");
@@ -79,6 +79,23 @@ export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(true); // Default to gorgeous dark / ambient slate theme
   const [installPromptEvent, setInstallPromptEvent] = useState<any>(null);
   const [canInstall, setCanInstall] = useState(false);
+
+  // High fidelity GPS tracking state variables
+  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [gpsStatus, setGpsStatus] = useState<"idle" | "detecting" | "success" | "error">("idle");
+  const [gpsErrorMessage, setGpsErrorMessage] = useState<string>("");
+  const [isUsingGps, setIsUsingGps] = useState<boolean>(false);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+
+  const triggerToast = (message: string, type: "success" | "error" | "info" = "info") => {
+    setToast({ message, type });
+    setTimeout(() => {
+      setToast(prev => prev?.message === message ? null : prev);
+    }, 4500);
+  };
+
+  // Dynamically resolve selectedStation from current station name
+  const selectedStation = stations.find(s => s.sitename === selectedStationName) || stations[0] || null;
 
   // Fetch AQI stations from our full-stack Express secure proxy
   const fetchStations = async (silent = false) => {
@@ -95,18 +112,6 @@ export default function App() {
       const payload = await res.json();
       if (payload && payload.success && Array.isArray(payload.data)) {
         setStations(payload.data);
-        
-        // On initial loading, default selected to a highly recognized station like "板橋"
-        if (!selectedStation) {
-          const defaultStation = payload.data.find((s: StationData) => s.sitename === "板橋") || payload.data[0];
-          setSelectedStation(defaultStation);
-        } else {
-          // Keep current station updated with fresh stats
-          const refreshedCurrent = payload.data.find(
-            (s: StationData) => s.sitename === selectedStation.sitename && s.county === selectedStation.county
-          );
-          if (refreshedCurrent) setSelectedStation(refreshedCurrent);
-        }
 
         const now = new Date();
         setLastUpdated(now.toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
@@ -140,19 +145,28 @@ export default function App() {
       clearInterval(pollId);
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     };
-  }, [selectedStation]);
+  }, []);
 
   // Geolocation-based station matching
   const detectAndSetClosestStation = () => {
     if (!navigator.geolocation) {
-      alert("抱歉，您的裝置或瀏覽器不支援 GPS 地理定位服務。");
+      const msg = "抱歉，您的裝置或瀏覽器不支援 GPS 地理定位服務。";
+      setGpsStatus("error");
+      setGpsErrorMessage(msg);
+      triggerToast(msg, "error");
       return;
     }
 
     setDetectingLocation(true);
+    setGpsStatus("detecting");
+    setGpsErrorMessage("");
+    triggerToast("正在讀取 GPS 衛星定位系統運作，請授權定位...", "info");
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
+        setGpsCoords({ lat: latitude, lon: longitude });
+
         let closestStation: StationData | null = null;
         let minDistance = Infinity;
 
@@ -169,18 +183,32 @@ export default function App() {
         });
 
         if (closestStation) {
-          setSelectedStation(closestStation);
+          const matchedName = (closestStation as StationData).sitename;
+          setSelectedStationName(matchedName);
+          setIsUsingGps(true);
+          setGpsStatus("success");
+          triggerToast(`📍 定位配對成功！已自動切換至最近「${matchedName}」測站`, "success");
           setActiveTab("dashboard");
-          // Dispatch a small sound or dynamic prompt indicating success
         } else {
-          // If coords not mapped directly, default to county-level match
-          alert("定位成功！但目前未在鄰近區域配對到專門大氣測站。已保留現行預定。");
+          setGpsStatus("error");
+          setGpsErrorMessage("定位已讀取，但在資料庫中未能成功配對鄰接之專屬大氣觀測點。");
+          triggerToast("定位已讀取，但附近無配對大氣測站資料。已還原預設。", "error");
         }
         setDetectingLocation(false);
       },
       (error) => {
         console.warn("Location fetch blocked:", error);
-        alert("GPS 定位失敗，這可能是因為您在瀏覽器中封鎖了定位權限。請手動自選地區測站！");
+        let errorMsg = "GPS 定位失敗。";
+        if (error.code === error.PERMISSION_DENIED) {
+          errorMsg = "您拒絕了定位權限。請於瀏覽器/手機設定中允許定位，並再按一次立即偵測！";
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          errorMsg = "無法取得您的位置資訊，請檢查裝置的 GPS 定位是否已經開通。";
+        } else if (error.code === error.TIMEOUT) {
+          errorMsg = "讀取 GPS 訊號逾時。請移動到收訊優良的區域，或是手動挑選縣市觀測！";
+        }
+        setGpsStatus("error");
+        setGpsErrorMessage(errorMsg);
+        triggerToast(errorMsg, "error");
         setDetectingLocation(false);
       },
       { enableHighAccuracy: true, timeout: 8000 }
@@ -211,8 +239,8 @@ export default function App() {
         }`}></div>
       </div>
 
-      {/* App Top Brand Header Bar */}
-      <header id="app-brand-header" className="relative z-10 flex items-center justify-between px-5 pt-6 pb-5 bg-white/10 backdrop-blur-md border-b border-white/20 shadow-lg">
+      {/* App Top Brand Header Bar with iOS Status Bar safe area gap */}
+      <header id="app-brand-header" className="relative z-10 flex items-center justify-between px-5 pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] pb-5 bg-slate-950/40 backdrop-blur-md border-b border-white/10 shadow-lg">
         <div className="flex items-center gap-3">
           {/* Logo Brand Widget */}
           <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform shrink-0">
@@ -258,6 +286,8 @@ export default function App() {
             onRefresh={() => fetchStations()}
             refreshing={refreshing}
             lastUpdated={lastUpdated}
+            isUsingGps={isUsingGps}
+            gpsCoords={gpsCoords}
           />
         )}
 
@@ -266,11 +296,16 @@ export default function App() {
             stations={stations}
             selectedStation={selectedStation}
             onSelectStation={(st) => {
-              setSelectedStation(st);
+              setSelectedStationName(st.sitename);
+              setIsUsingGps(false); // Reset GPS mode if manually selection made
               setActiveTab("dashboard");
             }}
             onDetectLocation={detectAndSetClosestStation}
             detectingLocation={detectingLocation}
+            gpsCoords={gpsCoords}
+            gpsStatus={gpsStatus}
+            gpsErrorMessage={gpsErrorMessage}
+            isUsingGps={isUsingGps}
           />
         )}
 
@@ -349,6 +384,24 @@ export default function App() {
         </button>
 
       </nav>
+
+      {/* High-Fidelity Custom Floating Toast Notification Banner */}
+      {toast && (
+        <div className="fixed bottom-28 left-4 right-4 z-50 max-w-sm mx-auto transition-transform duration-300 ease-out transform">
+          <div className={`p-4.5 rounded-2.5xl shadow-2xl flex items-start gap-3 backdrop-blur-xl border ${
+            toast.type === "success" 
+              ? "bg-emerald-950/95 border-emerald-500/40 text-emerald-100 shadow-emerald-950/40" 
+              : toast.type === "error"
+              ? "bg-rose-950/95 border-rose-500/40 text-rose-100 shadow-rose-950/40"
+              : "bg-slate-900/95 border-emerald-500/20 text-slate-100 shadow-slate-950/40"
+          }`}>
+            <span className="text-base shrink-0 mt-0.5 select-none">
+              {toast.type === "success" ? "🟢" : toast.type === "error" ? "⚠️" : "💡"}
+            </span>
+            <div className="flex-1 text-xs font-bold leading-relaxed">{toast.message}</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

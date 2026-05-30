@@ -9,6 +9,10 @@ interface CitySelectorProps {
   onSelectStation: (station: StationData) => void;
   onDetectLocation: () => void;
   detectingLocation: boolean;
+  gpsCoords?: { lat: number; lon: number } | null;
+  gpsStatus?: "idle" | "detecting" | "success" | "error";
+  gpsErrorMessage?: string;
+  isUsingGps?: boolean;
 }
 
 export default function CitySelector({
@@ -16,7 +20,11 @@ export default function CitySelector({
   selectedStation,
   onSelectStation,
   onDetectLocation,
-  detectingLocation
+  detectingLocation,
+  gpsCoords,
+  gpsStatus,
+  gpsErrorMessage,
+  isUsingGps
 }: CitySelectorProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRegion, setSelectedRegion] = useState<"all" | "north" | "central" | "south" | "east">("all");
@@ -48,35 +56,88 @@ export default function CitySelector({
 
   return (
     <div className="space-y-4 px-1 text-white" id="city-selector">
-      {/* Location button */}
+      {/* Location button with dynamic high-fidelity feedback */}
       <button
         id="location-btn"
         onClick={onDetectLocation}
         disabled={detectingLocation}
-        className="w-full flex items-center justify-between p-4.5 rounded-3xl bg-white/10 backdrop-blur-lg border border-white/20 shadow-xl transition-all duration-200 active:scale-95 text-left group cursor-pointer"
+        className={`w-full flex flex-col gap-3 p-4.5 rounded-3xl backdrop-blur-lg border shadow-xl transition-all duration-200 active:scale-97 text-left group cursor-pointer ${
+          isUsingGps 
+            ? "bg-emerald-950/40 border-emerald-500/50 hover:bg-emerald-950/50" 
+            : gpsStatus === "error"
+            ? "bg-rose-950/30 border-rose-500/40 hover:bg-rose-950/40"
+            : "bg-white/10 border-white/20 hover:bg-white/15"
+        }`}
       >
-        <div className="flex items-center gap-3.5">
-          <div className="p-2.5 rounded-2xl bg-white/15 text-white border border-white/10 group-hover:scale-105 transition-transform shadow-md">
-            <MapPin className="w-5.5 h-5.5 text-emerald-300" />
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-3.5">
+            <div className={`p-2.5 rounded-2xl border group-hover:scale-105 transition-transform shadow-md ${
+              isUsingGps 
+                ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/20" 
+                : gpsStatus === "error"
+                ? "bg-rose-500/20 text-rose-300 border-rose-500/20"
+                : "bg-white/15 text-white border-white/10"
+            }`}>
+              <MapPin className="w-5.5 h-5.5" />
+            </div>
+            <div>
+              <div className="font-extrabold text-white text-sm tracking-tight flex items-center gap-1.5">
+                <span>定位目前位置</span>
+                {isUsingGps && (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-400 text-emerald-950 font-black tracking-widest uppercase">
+                    使用中
+                  </span>
+                )}
+              </div>
+              <div className="text-white/75 text-xs mt-0.5 font-medium">自動媒合離您最近的監測站</div>
+            </div>
           </div>
-          <div>
-            <div className="font-extrabold text-white text-sm tracking-tight">定位目前位置</div>
-            <div className="text-white/70 text-xs mt-0.5 font-medium">自動媒合離您最近的監測站</div>
+          
+          <div className="flex items-center gap-1.5 text-xs font-bold shrink-0">
+            {detectingLocation ? (
+              <div className="flex items-center gap-1 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full text-emerald-300">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                <span>定位中...</span>
+              </div>
+            ) : (
+              <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full border transition-colors ${
+                isUsingGps 
+                  ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-200" 
+                  : "bg-white/10 border-white/10 hover:bg-white/20 text-white"
+              }`}>
+                <span>{isUsingGps ? "重新偵測" : "立即偵測"}</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </div>
+            )}
           </div>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-white font-bold">
-          {detectingLocation ? (
-            <div className="flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-              <span className="text-emerald-300">定位中...</span>
+
+        {/* Dynamic sub-statuses to satisfy 'showing current detected location' */}
+        {(gpsStatus === "success" && gpsCoords && selectedStation) && (
+          <div className="w-full mt-1 p-2.5 rounded-2xl bg-emerald-950/50 border border-emerald-500/30 text-[11px] text-emerald-100 font-semibold leading-relaxed flex flex-col gap-1">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <span>GPS 偵測成功！</span>
             </div>
-          ) : (
-            <div className="flex items-center gap-1 bg-white/10 px-2.5 py-1 rounded-full border border-white/10 hover:bg-white/20 transition-colors">
-              <span>立即偵測</span>
-              <ChevronRight className="w-3.5 h-3.5" />
+            <div className="text-emerald-300/90 font-mono">
+              經緯座標：({gpsCoords.lat.toFixed(5)}° N, {gpsCoords.lon.toFixed(5)}° E)
             </div>
-          )}
-        </div>
+            <div className="mt-0.5 text-white bg-emerald-900/60 self-start px-2 py-0.5 rounded-md text-[10px] font-black">
+              已自動配對至最鄰近的「{selectedStation.sitename}」測站（位於 {selectedStation.county}）
+            </div>
+          </div>
+        )}
+
+        {gpsStatus === "error" && gpsErrorMessage && (
+          <div className="w-full mt-1 p-2.5 rounded-2xl bg-rose-950/50 border border-rose-500/30 text-[11px] text-rose-200 font-semibold leading-relaxed flex flex-col gap-1 shadow-inner">
+            <div className="flex items-center gap-1.5 text-rose-300">
+              <span className="text-xs">⚠️</span>
+              <span className="font-bold">定位偵測受阻</span>
+            </div>
+            <div className="text-white/80 leading-normal">{gpsErrorMessage}</div>
+            <div className="text-[10px] text-rose-300/70 mt-0.5">提示：若使用 iOS 裝置，請於「設定 &gt; 隱私權與安全性 &gt; 定位服務」中，確認已開放您的瀏覽器定位權限喔！</div>
+          </div>
+        )}
       </button>
 
       {/* Search and Region Filter */}
