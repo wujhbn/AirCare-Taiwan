@@ -84,67 +84,69 @@ async function startServer() {
   }
 
   // Live proxy endpoint which automatically chains:
-  // 1. MOENV Environment Open API v2 (if key is supplied/available, or with fallback key)
-  // 2. Open Data HTTP API v1
-  // 3. Realistic dynamic simulation database (bulletproof fallback)
+  // 1. Official MOENV API
+  // 2. Dynamic Fallback
   app.get("/api/aqi", async (req, res) => {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000); // 4 seconds timeout
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
 
     try {
-      // 1. Check if we can fetch live data from MOENV API v2 or open JSON
-      // Let's first try MOENV public JSON CDN (v2 output sometimes uploaded as open resources or v1 fallback)
-      // The open data link:
-      const publicUrl = "https://data.moenv.gov.tw/api/v2/aqx_p_432?api_key=e8dd42e6-9b8b-43f8-991e-b3dee723a52d&limit=1000&sort=ImportDate%20desc&format=JSON";
+      const publicUrl = "https://data.moenv.gov.tw/api/v2/aqx_p_432?api_key=e75b1660-e564-4107-aad5-a8be1f905dd9&limit=1000&sort=ImportDate%20desc&format=JSON";
       
       const response = await fetch(publicUrl, {
         signal: controller.signal,
-        headers: { "User-Agent": "AirCareApp/1.0" }
+        headers: { "User-Agent": "AirCareApp/2.0", "Accept": "application/json" }
       });
       
       clearTimeout(timeoutId);
 
       if (response.ok) {
         const rawJson: any = await response.json();
-        
-        // MOENV v1/v2 schema typically parses an array of records
-        let records = Array.isArray(rawJson) ? rawJson : (rawJson.records || []);
+        const records = rawJson?.records || [];
         
         if (records.length > 0) {
           const parsedStations = records.map((r: any) => {
-            const aqi = parseInt(r.aqi || r.AQI, 10);
-            const pm25 = parseInt(r["pm2.5"] || r["PM2.5"] || r.pm25, 10) || 0;
-            const pm10 = parseInt(r.pm10 || r.PM10, 10) || 0;
-            const windSpeed = parseFloat(r.wind_speed || r.WindSpeed) || 0;
+            const county = r.county || "未知";
+            const sitename = r.sitename || "未知";
+            const aqi = parseInt(r.aqi, 10);
+            const status = r.status || getStatusFromAQI(aqi);
             
-            // Generate some plausible temperature and humidity based on latitude/season since EPA focus is mostly AQI
-            // North has lower temp, South has warmer temp, etc.
-            const isSouth = ["高雄", "屏東", "台南", "嘉義"].some(cty => (r.county || r.County || "").includes(cty));
-            const county = r.county || r.County || "未知";
-            const sitename = r.sitename || r.SiteName || "未知";
-            
+            const pm25 = parseFloat(r["pm2.5"] || "0");
+            const pm10 = parseFloat(r.pm10 || "0");
+            const o3 = parseFloat(r.o3 || r.o3_8hr || "0");
+            const co = parseFloat(r.co || r.co_8hr || "0");
+            const so2 = parseFloat(r.so2 || "0");
+            const no2 = parseFloat(r.no2 || "0");
+            const windSpeed = parseFloat(r.wind_speed || "0");
+
+            // Generate some plausible temperature and humidity since the API lacks them
+            const isSouth = ["高雄", "屏東", "台南", "嘉義", "臺南"].some(cty => county.includes(cty));
             let temp = isSouth ? 29 : 25;
-            temp += Math.floor(Math.abs(hashString(sitename) % 5)) - 2; // pseudo-stable variance
+            temp += Math.floor(Math.abs(hashString(sitename) % 5)) - 2;
             let humidity = 70 + (hashString(sitename) % 20);
 
             return {
               county,
               sitename,
-              status: r.status || r.Status || getStatusFromAQI(aqi),
+              status,
               aqi: isNaN(aqi) ? 0 : aqi,
-              pm25,
-              pm10,
+              pm25: isNaN(pm25) ? 0 : pm25,
+              pm10: isNaN(pm10) ? 0 : pm10,
+              o3: isNaN(o3) ? 0 : o3,
+              co: isNaN(co) ? 0 : co,
+              so2: isNaN(so2) ? 0 : so2,
+              no2: isNaN(no2) ? 0 : no2,
               temp,
               humidity,
-              wind_speed: windSpeed,
-              publishtime: r.publishtime || r.PublishTime || new Date().toISOString()
+              wind_speed: isNaN(windSpeed) ? 0 : windSpeed,
+              publishtime: r.publishtime || new Date().toISOString()
             };
-          }).filter((s: any) => s.aqi > 0);
+          });
 
           if (parsedStations.length > 0) {
             return res.json({
               success: true,
-              source: "MOENV Public Open Data API",
+              source: "MOENV API v2",
               timestamp: new Date().toISOString(),
               data: parsedStations
             });
@@ -152,41 +154,30 @@ async function startServer() {
         }
       }
     } catch (err) {
-      // Intentionally fall through to beautiful high-fidelity dynamic fallback
-      console.warn("Live API fetch failed, activating hyper-realistic local fallback database:", err);
+      console.warn("Live API fetch failed, activating fallback database:", err);
     } finally {
       clearTimeout(timeoutId);
     }
 
     // Dynamic High-Fidelity Simulation Fallback
-    // Generates a fully dynamic Taiwan AQI profile with time-of-day temperature adjustments and hourly offset spikes matching weather models
     const hour = new Date().getHours();
     const isNightNow = hour < 6 || hour > 18;
-    
-    // Simulate real fluctuate measurements that slowly shift based on hours and random seed
     const simulatedData = FALLBACK_STATIONS.map(station => {
-      // Use hour and station name hash to create predictable but shifting measurements
       const seed = Math.abs(hashString(station.sitename) + hour) % 100;
       const variationMax = station.aqi > 100 ? 15 : 6;
       const aqiDelta = Math.floor((seed % variationMax) - (variationMax / 2));
       const finalAqi = Math.max(5, station.aqi + aqiDelta);
       
-      const pm25Delta = Math.floor((seed % 6) - 3);
-      const finalPm25 = Math.max(1, Math.round(station.pm25 + pm25Delta));
+      const finalPm25 = Math.max(1, Math.round(station.pm25 + Math.floor((seed % 6) - 3)));
+      const finalPm10 = Math.max(2, Math.round(station.pm10 + Math.floor((seed % 10) - 5)));
 
-      const pm10Delta = Math.floor((seed % 10) - 5);
-      const finalPm10 = Math.max(2, Math.round(station.pm10 + pm10Delta));
-
-      // Temp cooling at night or peak heat around 2 PM
       const baseTemp = station.temp;
       const tempDelta = isNightNow ? -3 : (hour >= 11 && hour <= 15 ? 3 : 0);
       const randomTempVar = (seed % 3) - 1;
       const finalTemp = baseTemp + tempDelta + randomTempVar;
 
-      // Wet at night, drier in daylight
-      const baseHumidity = station.humidity;
       const humidityDelta = isNightNow ? 8 : -5;
-      const finalHumidity = Math.min(99, Math.max(30, baseHumidity + humidityDelta + (seed % 5)));
+      const finalHumidity = Math.min(99, Math.max(30, station.humidity + humidityDelta + (seed % 5)));
 
       return {
         county: station.county,
@@ -195,6 +186,10 @@ async function startServer() {
         aqi: finalAqi,
         pm25: finalPm25,
         pm10: finalPm10,
+        o3: Math.round(finalAqi * 0.5),
+        co: 0.3,
+        so2: 1.5,
+        no2: 8,
         temp: finalTemp,
         humidity: finalHumidity,
         publishtime: new Date().toISOString()
@@ -203,7 +198,7 @@ async function startServer() {
 
     res.json({
       success: true,
-      source: "AirCare BackUp Dynamic Data Engine (Taiwan Profile)",
+      source: "AirCare BackUp Dynamic Data Engine",
       timestamp: new Date().toISOString(),
       data: simulatedData
     });

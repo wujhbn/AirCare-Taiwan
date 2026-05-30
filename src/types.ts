@@ -5,6 +5,10 @@ export interface StationData {
   aqi: number;
   pm25: number;
   pm10: number;
+  o3: number;
+  co: number;
+  so2: number;
+  no2: number;
   temp: number;
   humidity: number;
   wind_speed?: number;

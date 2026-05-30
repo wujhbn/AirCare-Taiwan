@@ -195,33 +195,59 @@ export default function AQIDashboard({
           </div>
         </div>
 
-        {/* Temperature */}
-        <div className="p-5 rounded-3xl glass-panel relative overflow-hidden shadow-xl flex flex-col justify-between h-36">
-          <div className="flex items-center gap-1.5 text-white/70 text-xs font-bold tracking-wider">
-            <Thermometer className="w-5 h-5 text-orange-400" />
-            <span>目前溫度</span>
+        {/* O3 Ozone */}
+        <div className="p-4 rounded-3xl glass-panel relative overflow-hidden shadow-xl flex flex-col justify-between h-32">
+          <div className="flex items-center justify-between text-white/70 text-[10px] font-bold tracking-wider">
+            <span>O3 臭氧</span>
+            <span className="font-semibold text-xs">ppb</span>
           </div>
           <div>
-            <div className="text-4xl font-black font-sans text-white flex items-baseline">
-              <span>{station.temp}</span>
-              <span className="text-lg font-normal text-white/60 ml-0.5">°C</span>
+            <div className="text-3xl font-black font-sans text-white mt-1 flex items-baseline gap-1">
+              <span>{station.o3 || 0}</span>
             </div>
-            <p className="text-xs text-white/60 font-semibold mt-1">體感約 {Math.max(Number(station.temp) - 2, 0)}°C</p>
+            <p className="text-[10px] text-white/50 font-semibold mt-1 truncate">8小時移動平均</p>
           </div>
         </div>
-        
-        {/* Humidity */}
-        <div className="p-5 rounded-3xl glass-panel relative overflow-hidden shadow-xl flex flex-col justify-between h-36">
-          <div className="flex items-center gap-1.5 text-white/70 text-xs font-bold tracking-wider">
-            <Droplets className="w-5 h-5 text-sky-400" />
-            <span>目前濕度</span>
+
+        {/* CO Carbon Monoxide */}
+        <div className="p-4 rounded-3xl glass-panel relative overflow-hidden shadow-xl flex flex-col justify-between h-32">
+          <div className="flex items-center justify-between text-white/70 text-[10px] font-bold tracking-wider">
+            <span>CO 一氧化碳</span>
+            <span className="font-semibold text-xs">ppm</span>
           </div>
           <div>
-            <div className="text-4xl font-black font-sans text-white flex items-baseline">
-              <span>{station.humidity}</span>
-              <span className="text-lg font-normal text-white/60 ml-0.5">%</span>
+            <div className="text-3xl font-black font-sans text-white mt-1 flex items-baseline gap-1">
+              <span>{station.co || 0}</span>
             </div>
-            <p className="text-xs text-white/60 font-semibold mt-1">大氣含水量適中</p>
+            <p className="text-[10px] text-white/50 font-semibold mt-1 truncate">8小時移動平均</p>
+          </div>
+        </div>
+
+        {/* SO2 */}
+        <div className="p-4 rounded-3xl glass-panel relative overflow-hidden shadow-xl flex flex-col justify-between h-32">
+          <div className="flex items-center justify-between text-white/70 text-[10px] font-bold tracking-wider">
+            <span>SO2 二氧化硫</span>
+            <span className="font-semibold text-xs">ppb</span>
+          </div>
+          <div>
+             <div className="text-3xl font-black font-sans text-white mt-1 flex items-baseline gap-1">
+              <span>{station.so2 || 0}</span>
+            </div>
+            <p className="text-[10px] text-white/50 font-semibold mt-1 truncate">小時濃度</p>
+          </div>
+        </div>
+
+        {/* NO2 */}
+        <div className="p-4 rounded-3xl glass-panel relative overflow-hidden shadow-xl flex flex-col justify-between h-32">
+          <div className="flex items-center justify-between text-white/70 text-[10px] font-bold tracking-wider">
+            <span>NO2 二氧化氮</span>
+            <span className="font-semibold text-xs">ppb</span>
+          </div>
+          <div>
+             <div className="text-3xl font-black font-sans text-white mt-1 flex items-baseline gap-1">
+              <span>{station.no2 || 0}</span>
+            </div>
+            <p className="text-[10px] text-white/50 font-semibold mt-1 truncate">小時濃度</p>
           </div>
         </div>
 

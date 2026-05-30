@@ -172,7 +172,7 @@ export default function TrendCharts({ station }: TrendChartsProps) {
 
             {/* Guide grid lines */}
             <line x1={paddingLeft} y1={paddingTop} x2={width - paddingRight} y2={paddingTop} stroke="rgba(255,255,255,0.15)" strokeDasharray="3" />
-            <line x1={paddingLeft} y1={paddingTop + chartHeight / 2} x2={width - paddingRight} y2={paddingTop + chartHeight / 2} stroke="rgba(255,255,255,0.15)" stroke-dasharray="3" />
+            <line x1={paddingLeft} y1={paddingTop + chartHeight / 2} x2={width - paddingRight} y2={paddingTop + chartHeight / 2} stroke="rgba(255,255,255,0.15)" strokeDasharray="3" />
             <line x1={paddingLeft} y1={paddingTop + chartHeight} x2={width - paddingRight} y2={paddingTop + chartHeight} stroke="rgba(255,255,255,0.25)" />
 
             {/* Y Axis indicators */}

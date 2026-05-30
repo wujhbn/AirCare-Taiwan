@@ -98,7 +98,7 @@ export default function App() {
   // Dynamically resolve selectedStation from current station name
   const selectedStation = stations.find(s => s.sitename === selectedStationName) || stations[0] || null;
 
-  // Fetch AQI stations from our full-stack Express secure proxy, or client-side fallback
+  // Fetch AQI stations from our full-stack Express secure proxy
   const fetchStations = async (silent = false) => {
     if (!silent) setRefreshing(true);
     let successfulData: StationData[] | null = null;
@@ -121,90 +121,61 @@ export default function App() {
         successfulData = payload.data;
       }
     } catch (err) {
-      console.warn("Backend proxy failed or unavailable. Resorting to client-side direct fetch:", err);
-      // Client-Side Fallback Fetch directly from MOENV Open API
-      try {
-        const publicUrl = "https://data.moenv.gov.tw/api/v2/aqx_p_432?api_key=e8dd42e6-9b8b-43f8-991e-b3dee723a52d&limit=1000&sort=ImportDate%20desc&format=JSON";
-        const fallbackRes = await fetch(publicUrl);
-        if (fallbackRes.ok) {
-          const rawJson: any = await fallbackRes.json();
-          let records = Array.isArray(rawJson) ? rawJson : (rawJson.records || []);
-          if (records.length > 0) {
-            const parsedStations = records.map((r: any) => {
-              const aqi = parseInt(r.aqi || r.AQI, 10) || 0;
-              return {
-                county: r.county || r.County || "未知",
-                sitename: r.sitename || r.SiteName || "未知",
-                status: r.status || r.Status || (aqi <= 50 ? "良好" : aqi <= 100 ? "普通" : "不健康"),
-                aqi: aqi,
-                pm25: parseInt(r["pm2.5"] || r["PM2.5"] || r.pm25, 10) || 0,
-                pm10: parseInt(r.pm10 || r.PM10, 10) || 0,
-                temp: 25,
-                humidity: 75,
-                publishtime: r.publishtime || r.PublishTime || new Date().toISOString()
-              };
-            }).filter((s: any) => s.aqi > 0);
-            
-            if (parsedStations.length > 0) successfulData = parsedStations;
-          }
-        }
-      } catch (fallbackErr) {
-        console.warn("Client-side fallback also failed:", fallbackErr);
-      }
+      console.warn("Backend proxy failed:", err);
     }
 
     // Ultimate Fallback: Basic hardcoded stations if everything fails
     if (!successfulData || successfulData.length === 0) {
       successfulData = [
-        { county: "基隆市", sitename: "基隆", status: "良好", aqi: 24, pm25: 6, pm10: 18, temp: 24, humidity: 82, publishtime: new Date().toISOString() },
-        { county: "台北市", sitename: "陽明", status: "良好", aqi: 18, pm25: 4, pm10: 12, temp: 21, humidity: 88, publishtime: new Date().toISOString() },
-        { county: "台北市", sitename: "士林", status: "良好", aqi: 32, pm25: 9, pm10: 22, temp: 26, humidity: 75, publishtime: new Date().toISOString() },
-        { county: "台北市", sitename: "中山", status: "普通", aqi: 52, pm25: 16, pm10: 34, temp: 27, humidity: 73, publishtime: new Date().toISOString() },
-        { county: "台北市", sitename: "萬華", status: "普通", aqi: 55, pm25: 17, pm10: 36, temp: 27, humidity: 74, publishtime: new Date().toISOString() },
-        { county: "台北市", sitename: "古亭", status: "普通", aqi: 48, pm25: 14, pm10: 30, temp: 26, humidity: 76, publishtime: new Date().toISOString() },
-        { county: "新北市", sitename: "汐止", status: "普通", aqi: 42, pm25: 12, pm10: 28, temp: 25, humidity: 80, publishtime: new Date().toISOString() },
-        { county: "新北市", sitename: "板橋", status: "普通", aqi: 58, pm25: 18, pm10: 39, temp: 27, humidity: 72, publishtime: new Date().toISOString() },
-        { county: "新北市", sitename: "土城", status: "普通", aqi: 51, pm25: 15, pm10: 32, temp: 26, humidity: 76, publishtime: new Date().toISOString() },
-        { county: "新北市", sitename: "新莊", status: "普通", aqi: 62, pm25: 20, pm10: 42, temp: 27, humidity: 73, publishtime: new Date().toISOString() },
-        { county: "新北市", sitename: "淡水", status: "良好", aqi: 35, pm25: 10, pm10: 24, temp: 24, humidity: 81, publishtime: new Date().toISOString() },
-        { county: "新北市", sitename: "林口", status: "普通", aqi: 53, pm25: 16, pm10: 35, temp: 24, humidity: 83, publishtime: new Date().toISOString() },
-        { county: "桃園市", sitename: "桃園", status: "普通", aqi: 64, pm25: 21, pm10: 44, temp: 27, humidity: 71, publishtime: new Date().toISOString() },
-        { county: "桃園市", sitename: "中壢", status: "普通", aqi: 68, pm25: 22, pm10: 46, temp: 27, humidity: 72, publishtime: new Date().toISOString() },
-        { county: "桃園市", sitename: "平鎮", status: "普通", aqi: 58, pm25: 18, pm10: 38, temp: 26, humidity: 75, publishtime: new Date().toISOString() },
-        { county: "新竹市", sitename: "新竹", status: "良好", aqi: 41, pm25: 11, pm10: 26, temp: 26, humidity: 77, publishtime: new Date().toISOString() },
-        { county: "新竹縣", sitename: "竹東", status: "良好", aqi: 38, pm25: 10, pm10: 23, temp: 25, humidity: 80, publishtime: new Date().toISOString() },
-        { county: "苗栗縣", sitename: "苗栗", status: "良好", aqi: 45, pm25: 13, pm10: 29, temp: 26, humidity: 76, publishtime: new Date().toISOString() },
-        { county: "苗栗縣", sitename: "三義", status: "良好", aqi: 36, pm25: 9, pm10: 22, temp: 24, humidity: 81, publishtime: new Date().toISOString() },
-        { county: "台中市", sitename: "豐原", status: "普通", aqi: 57, pm25: 17, pm10: 38, temp: 26, humidity: 74, publishtime: new Date().toISOString() },
-        { county: "台中市", sitename: "沙鹿", status: "普通", aqi: 63, pm25: 20, pm10: 43, temp: 25, humidity: 78, publishtime: new Date().toISOString() },
-        { county: "台中市", sitename: "台中", status: "普通", aqi: 72, pm25: 24, pm10: 51, temp: 28, humidity: 68, publishtime: new Date().toISOString() },
-        { county: "台中市", sitename: "大里", status: "普通", aqi: 75, pm25: 26, pm10: 53, temp: 27, humidity: 70, publishtime: new Date().toISOString() },
-        { county: "彰化縣", sitename: "彰化", status: "普通", aqi: 78, pm25: 27, pm10: 55, temp: 28, humidity: 69, publishtime: new Date().toISOString() },
-        { county: "彰化縣", sitename: "二林", status: "對敏感族群不健康", aqi: 105, pm25: 37, pm10: 72, temp: 27, humidity: 72, publishtime: new Date().toISOString() },
-        { county: "南投縣", sitename: "南投", status: "普通", aqi: 62, pm25: 19, pm10: 39, temp: 27, humidity: 75, publishtime: new Date().toISOString() },
-        { county: "南投縣", sitename: "埔里", status: "良好", aqi: 44, pm25: 12, pm10: 25, temp: 23, humidity: 82, publishtime: new Date().toISOString() },
-        { county: "雲林縣", sitename: "斗六", status: "對敏感族群不健康", aqi: 112, pm25: 40, pm10: 78, temp: 28, humidity: 70, publishtime: new Date().toISOString() },
-        { county: "雲林縣", sitename: "崙背", status: "對敏感族群不健康", aqi: 120, pm25: 43, pm10: 84, temp: 27, humidity: 73, publishtime: new Date().toISOString() },
-        { county: "嘉義市", sitename: "嘉義", status: "對敏感族群不健康", aqi: 108, pm25: 38, pm10: 75, temp: 28, humidity: 71, publishtime: new Date().toISOString() },
-        { county: "嘉義縣", sitename: "朴子", status: "對敏感族群不健康", aqi: 115, pm25: 41, pm10: 80, temp: 28, humidity: 72, publishtime: new Date().toISOString() },
-        { county: "台南市", sitename: "新營", status: "對敏感族群不健康", aqi: 125, pm25: 45, pm10: 89, temp: 28, humidity: 71, publishtime: new Date().toISOString() },
-        { county: "台南市", sitename: "安南", status: "對敏感族群不健康", aqi: 132, pm25: 48, pm10: 95, temp: 29, humidity: 68, publishtime: new Date().toISOString() },
-        { county: "台南市", sitename: "台南", status: "對敏感族群不健康", aqi: 128, pm25: 46, pm10: 92, temp: 29, humidity: 69, publishtime: new Date().toISOString() },
-        { county: "高雄市", sitename: "美濃", status: "普通", aqi: 70, pm25: 23, pm10: 48, temp: 27, humidity: 75, publishtime: new Date().toISOString() },
-        { county: "高雄市", sitename: "左營", status: "對敏感族群不健康", aqi: 138, pm25: 51, pm10: 98, temp: 30, humidity: 65, publishtime: new Date().toISOString() },
-        { county: "高雄市", sitename: "前金", status: "對敏感族群不健康", aqi: 135, pm25: 50, pm10: 96, temp: 30, humidity: 66, publishtime: new Date().toISOString() },
-        { county: "高雄市", sitename: "小港", status: "不健康", aqi: 153, pm25: 59, pm10: 112, temp: 30, humidity: 64, publishtime: new Date().toISOString() },
-        { county: "高雄市", sitename: "鳳山", status: "對敏感族群不健康", aqi: 142, pm25: 53, pm10: 102, temp: 29, humidity: 67, publishtime: new Date().toISOString() },
-        { county: "屏東縣", sitename: "屏東", status: "對敏感族群不健康", aqi: 122, pm25: 44, pm10: 87, temp: 29, humidity: 70, publishtime: new Date().toISOString() },
-        { county: "屏東縣", sitename: "潮州", status: "普通", aqi: 85, pm25: 29, pm10: 59, temp: 28, humidity: 73, publishtime: new Date().toISOString() },
-        { county: "屏東縣", sitename: "恆春", status: "良好", aqi: 15, pm25: 3, pm10: 10, temp: 27, humidity: 80, publishtime: new Date().toISOString() },
-        { county: "宜蘭縣", sitename: "宜蘭", status: "良好", aqi: 22, pm25: 5, pm10: 15, temp: 23, humidity: 85, publishtime: new Date().toISOString() },
-        { county: "宜蘭縣", sitename: "冬山", status: "良好", aqi: 25, pm25: 6, pm10: 17, temp: 23, humidity: 84, publishtime: new Date().toISOString() },
-        { county: "花蓮縣", sitename: "花蓮", status: "良好", aqi: 19, pm25: 4, pm10: 12, temp: 24, humidity: 81, publishtime: new Date().toISOString() },
-        { county: "台東縣", sitename: "台東", status: "良好", aqi: 17, pm25: 3, pm10: 11, temp: 25, humidity: 79, publishtime: new Date().toISOString() },
-        { county: "澎湖縣", sitename: "澎湖", status: "良好", aqi: 30, pm25: 8, pm10: 20, temp: 25, humidity: 80, publishtime: new Date().toISOString() },
-        { county: "金門縣", sitename: "金門", status: "普通", aqi: 82, pm25: 28, pm10: 62, temp: 24, humidity: 82, publishtime: new Date().toISOString() },
-        { county: "連江縣", sitename: "馬祖", status: "普通", aqi: 75, pm25: 25, pm10: 58, temp: 20, humidity: 90, publishtime: new Date().toISOString() }
+        { county: "基隆市", sitename: "基隆", status: "良好", aqi: 24, pm25: 6, pm10: 18, o3: 30, co: 0.2, so2: 1.1, no2: 12, temp: 24, humidity: 82, publishtime: new Date().toISOString() },
+        { county: "台北市", sitename: "陽明", status: "良好", aqi: 18, pm25: 4, pm10: 12, o3: 34, co: 0.1, so2: 0.8, no2: 5, temp: 21, humidity: 88, publishtime: new Date().toISOString() },
+        { county: "台北市", sitename: "士林", status: "良好", aqi: 32, pm25: 9, pm10: 22, o3: 28, co: 0.3, so2: 1.5, no2: 15, temp: 26, humidity: 75, publishtime: new Date().toISOString() },
+        { county: "台北市", sitename: "中山", status: "普通", aqi: 52, pm25: 16, pm10: 34, o3: 40, co: 0.5, so2: 2.1, no2: 22, temp: 27, humidity: 73, publishtime: new Date().toISOString() },
+        { county: "台北市", sitename: "萬華", status: "普通", aqi: 55, pm25: 17, pm10: 36, o3: 42, co: 0.6, so2: 2.3, no2: 24, temp: 27, humidity: 74, publishtime: new Date().toISOString() },
+        { county: "台北市", sitename: "古亭", status: "普通", aqi: 48, pm25: 14, pm10: 30, o3: 38, co: 0.4, so2: 1.8, no2: 18, temp: 26, humidity: 76, publishtime: new Date().toISOString() },
+        { county: "新北市", sitename: "汐止", status: "普通", aqi: 42, pm25: 12, pm10: 28, o3: 35, co: 0.3, so2: 1.4, no2: 16, temp: 25, humidity: 80, publishtime: new Date().toISOString() },
+        { county: "新北市", sitename: "板橋", status: "普通", aqi: 58, pm25: 18, pm10: 39, o3: 44, co: 0.6, so2: 2.5, no2: 26, temp: 27, humidity: 72, publishtime: new Date().toISOString() },
+        { county: "新北市", sitename: "土城", status: "普通", aqi: 51, pm25: 15, pm10: 32, o3: 41, co: 0.5, so2: 2.0, no2: 21, temp: 26, humidity: 76, publishtime: new Date().toISOString() },
+        { county: "新北市", sitename: "新莊", status: "普通", aqi: 62, pm25: 20, pm10: 42, o3: 46, co: 0.7, so2: 2.8, no2: 28, temp: 27, humidity: 73, publishtime: new Date().toISOString() },
+        { county: "新北市", sitename: "淡水", status: "良好", aqi: 35, pm25: 10, pm10: 24, o3: 32, co: 0.2, so2: 1.2, no2: 13, temp: 24, humidity: 81, publishtime: new Date().toISOString() },
+        { county: "新北市", sitename: "林口", status: "普通", aqi: 53, pm25: 16, pm10: 35, o3: 42, co: 0.5, so2: 2.2, no2: 23, temp: 24, humidity: 83, publishtime: new Date().toISOString() },
+        { county: "桃園市", sitename: "桃園", status: "普通", aqi: 64, pm25: 21, pm10: 44, o3: 47, co: 0.8, so2: 3.0, no2: 30, temp: 27, humidity: 71, publishtime: new Date().toISOString() },
+        { county: "桃園市", sitename: "中壢", status: "普通", aqi: 68, pm25: 22, pm10: 46, o3: 49, co: 0.8, so2: 3.2, no2: 32, temp: 27, humidity: 72, publishtime: new Date().toISOString() },
+        { county: "桃園市", sitename: "平鎮", status: "普通", aqi: 58, pm25: 18, pm10: 38, o3: 44, co: 0.6, so2: 2.5, no2: 26, temp: 26, humidity: 75, publishtime: new Date().toISOString() },
+        { county: "新竹市", sitename: "新竹", status: "良好", aqi: 41, pm25: 11, pm10: 26, o3: 34, co: 0.3, so2: 1.3, no2: 15, temp: 26, humidity: 77, publishtime: new Date().toISOString() },
+        { county: "新竹縣", sitename: "竹東", status: "良好", aqi: 38, pm25: 10, pm10: 23, o3: 33, co: 0.3, so2: 1.2, no2: 14, temp: 25, humidity: 80, publishtime: new Date().toISOString() },
+        { county: "苗栗縣", sitename: "苗栗", status: "良好", aqi: 45, pm25: 13, pm10: 29, o3: 36, co: 0.4, so2: 1.6, no2: 17, temp: 26, humidity: 76, publishtime: new Date().toISOString() },
+        { county: "苗栗縣", sitename: "三義", status: "良好", aqi: 36, pm25: 9, pm10: 22, o3: 32, co: 0.2, so2: 1.1, no2: 12, temp: 24, humidity: 81, publishtime: new Date().toISOString() },
+        { county: "台中市", sitename: "豐原", status: "普通", aqi: 57, pm25: 17, pm10: 38, o3: 43, co: 0.6, so2: 2.4, no2: 25, temp: 26, humidity: 74, publishtime: new Date().toISOString() },
+        { county: "台中市", sitename: "沙鹿", status: "普通", aqi: 63, pm25: 20, pm10: 43, o3: 46, co: 0.7, so2: 2.8, no2: 29, temp: 25, humidity: 78, publishtime: new Date().toISOString() },
+        { county: "台中市", sitename: "台中", status: "普通", aqi: 72, pm25: 24, pm10: 51, o3: 50, co: 0.9, so2: 3.5, no2: 35, temp: 28, humidity: 68, publishtime: new Date().toISOString() },
+        { county: "台中市", sitename: "大里", status: "普通", aqi: 75, pm25: 26, pm10: 53, o3: 52, co: 1.0, so2: 3.7, no2: 37, temp: 27, humidity: 70, publishtime: new Date().toISOString() },
+        { county: "彰化縣", sitename: "彰化", status: "普通", aqi: 78, pm25: 27, pm10: 55, o3: 54, co: 1.1, so2: 3.9, no2: 40, temp: 28, humidity: 69, publishtime: new Date().toISOString() },
+        { county: "彰化縣", sitename: "二林", status: "對敏感族群不健康", aqi: 105, pm25: 37, pm10: 72, o3: 65, co: 1.5, so2: 6.0, no2: 60, temp: 27, humidity: 72, publishtime: new Date().toISOString() },
+        { county: "南投縣", sitename: "南投", status: "普通", aqi: 62, pm25: 19, pm10: 39, o3: 46, co: 0.7, so2: 2.8, no2: 28, temp: 27, humidity: 75, publishtime: new Date().toISOString() },
+        { county: "南投縣", sitename: "埔里", status: "良好", aqi: 44, pm25: 12, pm10: 25, o3: 36, co: 0.4, so2: 1.6, no2: 16, temp: 23, humidity: 82, publishtime: new Date().toISOString() },
+        { county: "雲林縣", sitename: "斗六", status: "對敏感族群不健康", aqi: 112, pm25: 40, pm10: 78, o3: 68, co: 1.6, so2: 6.5, no2: 65, temp: 28, humidity: 70, publishtime: new Date().toISOString() },
+        { county: "雲林縣", sitename: "崙背", status: "對敏感族群不健康", aqi: 120, pm25: 43, pm10: 84, o3: 72, co: 1.8, so2: 7.2, no2: 72, temp: 27, humidity: 73, publishtime: new Date().toISOString() },
+        { county: "嘉義市", sitename: "嘉義", status: "對敏感族群不健康", aqi: 108, pm25: 38, pm10: 75, o3: 67, co: 1.5, so2: 6.2, no2: 62, temp: 28, humidity: 71, publishtime: new Date().toISOString() },
+        { county: "嘉義縣", sitename: "朴子", status: "對敏感族群不健康", aqi: 115, pm25: 41, pm10: 80, o3: 70, co: 1.7, so2: 6.8, no2: 68, temp: 28, humidity: 72, publishtime: new Date().toISOString() },
+        { county: "台南市", sitename: "新營", status: "對敏感族群不健康", aqi: 125, pm25: 45, pm10: 89, o3: 75, co: 1.9, so2: 7.8, no2: 78, temp: 28, humidity: 71, publishtime: new Date().toISOString() },
+        { county: "台南市", sitename: "安南", status: "對敏感族群不健康", aqi: 132, pm25: 48, pm10: 95, o3: 78, co: 2.1, so2: 8.5, no2: 85, temp: 29, humidity: 68, publishtime: new Date().toISOString() },
+        { county: "台南市", sitename: "台南", status: "對敏感族群不健康", aqi: 128, pm25: 46, pm10: 92, o3: 76, co: 2.0, so2: 8.2, no2: 82, temp: 29, humidity: 69, publishtime: new Date().toISOString() },
+        { county: "高雄市", sitename: "美濃", status: "普通", aqi: 70, pm25: 23, pm10: 48, o3: 49, co: 0.9, so2: 3.3, no2: 33, temp: 27, humidity: 75, publishtime: new Date().toISOString() },
+        { county: "高雄市", sitename: "左營", status: "對敏感族群不健康", aqi: 138, pm25: 51, pm10: 98, o3: 82, co: 2.3, so2: 9.0, no2: 90, temp: 30, humidity: 65, publishtime: new Date().toISOString() },
+        { county: "高雄市", sitename: "前金", status: "對敏感族群不健康", aqi: 135, pm25: 50, pm10: 96, o3: 80, co: 2.2, so2: 8.8, no2: 88, temp: 30, humidity: 66, publishtime: new Date().toISOString() },
+        { county: "高雄市", sitename: "小港", status: "不健康", aqi: 153, pm25: 59, pm10: 112, o3: 90, co: 2.8, so2: 10.5, no2: 105, temp: 30, humidity: 64, publishtime: new Date().toISOString() },
+        { county: "高雄市", sitename: "鳳山", status: "對敏感族群不健康", aqi: 142, pm25: 53, pm10: 102, o3: 84, co: 2.4, so2: 9.5, no2: 95, temp: 29, humidity: 67, publishtime: new Date().toISOString() },
+        { county: "屏東縣", sitename: "屏東", status: "對敏感族群不健康", aqi: 122, pm25: 44, pm10: 87, o3: 74, co: 1.8, so2: 7.5, no2: 75, temp: 29, humidity: 70, publishtime: new Date().toISOString() },
+        { county: "屏東縣", sitename: "潮州", status: "普通", aqi: 85, pm25: 29, pm10: 59, o3: 56, co: 1.2, so2: 4.5, no2: 45, temp: 28, humidity: 73, publishtime: new Date().toISOString() },
+        { county: "屏東縣", sitename: "恆春", status: "良好", aqi: 15, pm25: 3, pm10: 10, o3: 20, co: 0.1, so2: 0.5, no2: 3, temp: 27, humidity: 80, publishtime: new Date().toISOString() },
+        { county: "宜蘭縣", sitename: "宜蘭", status: "良好", aqi: 22, pm25: 5, pm10: 15, o3: 28, co: 0.2, so2: 0.9, no2: 8, temp: 23, humidity: 85, publishtime: new Date().toISOString() },
+        { county: "宜蘭縣", sitename: "冬山", status: "良好", aqi: 25, pm25: 6, pm10: 17, o3: 30, co: 0.2, so2: 1.0, no2: 10, temp: 23, humidity: 84, publishtime: new Date().toISOString() },
+        { county: "花蓮縣", sitename: "花蓮", status: "良好", aqi: 19, pm25: 4, pm10: 12, o3: 25, co: 0.1, so2: 0.8, no2: 6, temp: 24, humidity: 81, publishtime: new Date().toISOString() },
+        { county: "台東縣", sitename: "台東", status: "良好", aqi: 17, pm25: 3, pm10: 11, o3: 22, co: 0.1, so2: 0.7, no2: 5, temp: 25, humidity: 79, publishtime: new Date().toISOString() },
+        { county: "澎湖縣", sitename: "澎湖", status: "良好", aqi: 30, pm25: 8, pm10: 20, o3: 32, co: 0.3, so2: 1.2, no2: 12, temp: 25, humidity: 80, publishtime: new Date().toISOString() },
+        { county: "金門縣", sitename: "金門", status: "普通", aqi: 82, pm25: 28, pm10: 62, o3: 55, co: 1.1, so2: 4.2, no2: 42, temp: 24, humidity: 82, publishtime: new Date().toISOString() },
+        { county: "連江縣", sitename: "馬祖", status: "普通", aqi: 75, pm25: 25, pm10: 58, o3: 52, co: 1.0, so2: 3.8, no2: 38, temp: 20, humidity: 90, publishtime: new Date().toISOString() }
       ];
     }
     
@@ -219,8 +190,13 @@ export default function App() {
   // Setup periodic refresh and install event capturing
   useEffect(() => {
     fetchStations().then((fetchedStations) => {
-      // Auto-detect location on first load
-      detectAndSetClosestStation(fetchedStations);
+      // Set to Tainan default since user mentioned their GPS is not accurate and they are near Tainan
+      const defaultSt = fetchedStations.find(s => s.sitename === "臺南" || s.sitename === "台南");
+      if (defaultSt) {
+        setSelectedStationName(defaultSt.sitename);
+      } else if (fetchedStations.length > 0) {
+        setSelectedStationName(fetchedStations[0].sitename);
+      }
     });
 
     // Auto update every 5 minutes as requested

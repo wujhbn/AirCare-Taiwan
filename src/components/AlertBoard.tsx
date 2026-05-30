@@ -177,14 +177,14 @@ export default function AlertBoard({ currentStation, isDarkMode = true, setIsDar
           </p>
           <div className="flex items-center justify-between gap-2.5 pt-2 border-t border-white/10">
             <span className="text-xs text-white/60 font-bold font-mono">
-              當前測站：{currentStation?.sitename || "無選取"} (AQI: {currentStation?.aqi || 0})
+              通知測試功能：
             </span>
             <button
               id="trigger-alert-btn"
               onClick={triggerTestAlert}
               className="text-xs text-emerald-300 font-extrabold hover:text-emerald-200 flex items-center gap-1 active:scale-95 transition-all cursor-pointer bg-white/10 px-2.5 py-1 rounded-full border border-white/10 shadow-sm"
             >
-              <span>模擬測試預警通知</span>
+              <span>發送一則測試警報</span>
               <span>⚡</span>
             </button>
           </div>
@@ -201,103 +201,6 @@ export default function AlertBoard({ currentStation, isDarkMode = true, setIsDar
         )}
       </div>
 
-      {/* Installation Guide Card */}
-      <div className="p-5 rounded-[2.2rem] glass-panel space-y-4 border border-white/20 shadow-2xl">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-white/10 rounded-xl border border-white/15">
-            <Smartphone className="w-5 h-5 text-emerald-300" />
-          </div>
-          <div>
-            <h3 className="font-black text-white text-base">如何將 AirCare 安裝到手機？</h3>
-            <p className="text-xs text-white/70 mt-0.5 font-medium">安裝後即可像原生 App 一樣，享有獨立視窗與極速體驗</p>
-          </div>
-        </div>
-
-        {/* Phone selection tab */}
-        <div className="grid grid-cols-2 bg-white/10 p-1 rounded-2xl border border-white/10">
-          <button
-            onClick={() => setActiveInstructionTab("ios")}
-            className={`py-2.5 rounded-xl text-sm font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-              activeInstructionTab === "ios" ? "bg-white text-emerald-800 shadow-xl" : "text-white/60 hover:text-white"
-            }`}
-          >
-            <span>iPhone / iOS 手機</span>
-          </button>
-          <button
-            onClick={() => setActiveInstructionTab("android")}
-            className={`py-2.5 rounded-xl text-sm font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-              activeInstructionTab === "android" ? "bg-white text-emerald-800 shadow-xl" : "text-white/60 hover:text-white"
-            }`}
-          >
-            <span>Android / 瀏覽器</span>
-          </button>
-        </div>
-
-        {/* Step details */}
-        {activeInstructionTab === "ios" ? (
-          <div className="space-y-3.5 text-sm text-white/90 pt-1">
-            <div className="flex gap-3.5 items-start">
-              <span className="w-6 h-6 rounded-full bg-white/15 border border-white/25 text-xs flex items-center justify-center font-black text-white shrink-0">1</span>
-              <div>
-                <p className="font-extrabold text-white">使用 Safari 瀏覽器打開本頁</p>
-                <p className="text-xs text-white/75 mt-0.5 leading-relaxed font-semibold">iOS 限定使用內建的 Safari 瀏覽器才能完整支援 PWA 安裝功能。</p>
-              </div>
-            </div>
-            
-            <div className="flex gap-3.5 items-start">
-              <span className="w-6 h-6 rounded-full bg-white/15 border border-white/25 text-xs flex items-center justify-center font-black text-white shrink-0">2</span>
-              <div>
-                <p className="font-extrabold text-white flex items-center gap-1 flex-wrap">
-                  點擊瀏覽器下方工具列的「分享」按鈕
-                  <span className="inline-flex items-center bg-white/10 px-2 py-0.5 rounded-md border border-white/15 text-xs text-white font-bold gap-1">
-                    <Share className="w-4 h-4 text-emerald-300 inline" /> 分享
-                  </span>
-                </p>
-                <p className="text-xs text-white/75 mt-0.5 leading-relaxed font-semibold">即點擊底部一帶有向上箭頭的正方形圖示。</p>
-              </div>
-            </div>
-
-            <div className="flex gap-3.5 items-start">
-              <span className="w-6 h-6 rounded-full bg-white/15 border border-white/25 text-xs flex items-center justify-center font-black text-white shrink-0">3</span>
-              <div>
-                <p className="font-extrabold text-white flex items-center gap-1 flex-wrap">
-                  向下滾動並點選「加入主畫面」
-                  <span className="inline-flex items-center bg-white/10 px-2 py-0.5 rounded-md border border-white/15 text-xs text-white font-bold gap-1">
-                    <PlusSquare className="w-4 h-4 text-emerald-300" /> 加入主畫面
-                  </span>
-                </p>
-                <p className="text-xs text-white/75 mt-0.5 leading-relaxed font-semibold">點擊右上角的「新增」，手機桌面就會出現專屬 AirCare 的美麗綠精靈圖示！</p>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-3.5 text-sm text-white/90 pt-1">
-            <div className="flex gap-3.5 items-start">
-              <span className="w-6 h-6 rounded-full bg-white/15 border border-white/25 text-xs flex items-center justify-center font-black text-white shrink-0">1</span>
-              <div>
-                <p className="font-extrabold text-white">點擊瀏覽器系統選單</p>
-                <p className="text-xs text-white/75 mt-0.5 leading-relaxed font-semibold">在手機 Chrome 或者是 Edge 瀏覽器右上角點擊三個圓點「選單」圖示。</p>
-              </div>
-            </div>
-            
-            <div className="flex gap-3.5 items-start">
-              <span className="w-6 h-6 rounded-full bg-white/15 border border-white/25 text-xs flex items-center justify-center font-black text-white shrink-0">2</span>
-              <div>
-                <p className="font-extrabold text-white">點選「安裝應用程式」或「加入主畫面」</p>
-                <p className="text-xs text-white/75 mt-0.5 leading-relaxed font-semibold">當看見安裝視窗跳出後，點擊「安裝」確認即可完成。</p>
-              </div>
-            </div>
-
-            <div className="flex gap-3.5 items-start">
-              <span className="w-6 h-6 rounded-full bg-white/15 border border-white/25 text-xs flex items-center justify-center font-black text-white shrink-0">3</span>
-              <div>
-                <p className="font-extrabold text-white">享受獨立視窗極致體驗</p>
-                <p className="text-xs text-white/75 mt-0.5 leading-relaxed font-semibold">桌面上的圖示啟動會隱藏瀏覽器網址列，具有滑順原生轉場、更低的電量消耗。</p>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
 
     </div>
   );
