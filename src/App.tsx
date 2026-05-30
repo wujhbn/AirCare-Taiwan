@@ -98,7 +98,7 @@ export default function App() {
   // Dynamically resolve selectedStation from current station name
   const selectedStation = stations.find(s => s.sitename === selectedStationName) || stations[0] || null;
 
-  // Fetch AQI stations from our full-stack Express secure proxy
+  // Fetch AQI stations from MOENV API directly (supports CORS), fallback to proxy, then local list
   const fetchStations = async (silent = false) => {
     if (!silent) setRefreshing(true);
     let successfulData: StationData[] | null = null;
@@ -107,21 +107,72 @@ export default function App() {
       const controller = new AbortController();
       const signalId = setTimeout(() => controller.abort(), 6500);
 
-      const res = await fetch("/api/aqi", { signal: controller.signal });
+      // Try direct API first (Works on Vercel Static)
+      const publicUrl = "https://data.moenv.gov.tw/api/v2/aqx_p_432?api_key=e75b1660-e564-4107-aad5-a8be1f905dd9&limit=1000&sort=ImportDate%20desc&format=JSON";
+      const apiRes = await fetch(publicUrl, { signal: controller.signal });
       clearTimeout(signalId);
 
-      // Prevent processing HTML on Vercel Static deployments
-      const text = await res.text();
-      if (text.trim().startsWith("<")) {
-        throw new Error("Received HTML instead of JSON: Backend proxy might not be running.");
-      }
+      if (apiRes.ok) {
+        const rawJson: any = await apiRes.json();
+        const records = Array.isArray(rawJson) ? rawJson : (rawJson?.records || []);
+        
+        if (records.length > 0) {
+          successfulData = records.map((r: any) => {
+            const county = r.county || "未知";
+            const sitename = r.sitename || "未知";
+            const aqi = parseInt(r.aqi, 10);
+            
+            // Hash helper for mock temp/humidity since real API lacks it
+            const hash = sitename.split("").reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0);
+            const isSouth = ["高雄", "屏東", "台南", "嘉義", "臺南"].some(cty => county.includes(cty));
+            let temp = isSouth ? 29 : 25;
+            temp += Math.floor(Math.abs(hash % 5)) - 2;
+            let humidity = 70 + (Math.abs(hash) % 20);
 
-      const payload = JSON.parse(text);
-      if (payload && payload.success && Array.isArray(payload.data)) {
-        successfulData = payload.data;
+            return {
+              county,
+              sitename,
+              status: r.status || "未知",
+              aqi: isNaN(aqi) ? 0 : aqi,
+              pm25: parseFloat(r["pm2.5"] || "0") || 0,
+              pm10: parseFloat(r.pm10 || "0") || 0,
+              o3: parseFloat(r.o3 || r.o3_8hr || "0") || 0,
+              co: parseFloat(r.co || r.co_8hr || "0") || 0,
+              so2: parseFloat(r.so2 || "0") || 0,
+              no2: parseFloat(r.no2 || "0") || 0,
+              temp,
+              humidity,
+              wind_speed: parseFloat(r.wind_speed || "0") || 0,
+              publishtime: r.publishtime || new Date().toISOString()
+            };
+          }).filter((s: any) => s.aqi > 0);
+        }
       }
     } catch (err) {
-      console.warn("Backend proxy failed:", err);
+      console.warn("Direct MOENV API fetch failed:", err);
+    }
+
+    if (!successfulData || successfulData.length === 0) {
+      try {
+        const controller = new AbortController();
+        const signalId = setTimeout(() => controller.abort(), 6500);
+
+        const res = await fetch("/api/aqi", { signal: controller.signal });
+        clearTimeout(signalId);
+
+        // Prevent processing HTML on Vercel Static deployments
+        const text = await res.text();
+        if (text.trim().startsWith("<")) {
+          throw new Error("Received HTML instead of JSON: Backend proxy might not be running.");
+        }
+
+        const payload = JSON.parse(text);
+        if (payload && payload.success && Array.isArray(payload.data)) {
+          successfulData = payload.data;
+        }
+      } catch (err) {
+        console.warn("Backend proxy failed:", err);
+      }
     }
 
     // Ultimate Fallback: Basic hardcoded stations if everything fails
