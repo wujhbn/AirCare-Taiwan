@@ -102,7 +102,7 @@ async function startServer() {
 
       if (response.ok) {
         const rawJson: any = await response.json();
-        const records = rawJson?.records || [];
+        const records = Array.isArray(rawJson) ? rawJson : (rawJson?.records || []);
         
         if (records.length > 0) {
           const parsedStations = records.map((r: any) => {
