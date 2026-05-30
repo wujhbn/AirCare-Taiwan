@@ -119,9 +119,9 @@ export default function AQIDashboard({
           </svg>
 
           {/* Dial metrics overlay */}
-          <div className="absolute text-center flex flex-col justify-center items-center">
-            <span className="text-xs font-bold text-white/60 uppercase tracking-widest">AQI 指數</span>
-            <span className="text-[7.5rem] font-black text-white font-sans mt-1 leading-none tracking-tighter drop-shadow-2xl">
+          <div className="absolute inset-0 flex flex-col justify-center items-center">
+            <span className="text-sm font-bold text-white/70 uppercase tracking-widest mb-1">AQI 指數</span>
+            <span className="text-7xl font-black text-white font-sans leading-none tracking-tighter drop-shadow-2xl">
               {station.aqi}
             </span>
           </div>
