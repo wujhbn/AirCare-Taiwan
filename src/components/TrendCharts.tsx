@@ -129,8 +129,8 @@ export default function TrendCharts({ station }: TrendChartsProps) {
             <TrendingUp className="w-4.5 h-4.5 text-emerald-300" />
           </div>
           <div>
-            <h3 className="font-extrabold text-white text-sm tracking-tight">24小時空氣觀測趨勢</h3>
-            <p className="text-[10px] text-white/70 mt-0.5 font-medium">即時推算今日每兩小時濃度起伏</p>
+            <h3 className="font-extrabold text-white text-base tracking-tight">24小時空氣觀測趨勢</h3>
+            <p className="text-xs text-white/70 mt-0.5 font-medium">即時推算今日每兩小時濃度起伏</p>
           </div>
         </div>
 
@@ -138,7 +138,7 @@ export default function TrendCharts({ station }: TrendChartsProps) {
         <div className="flex bg-white/15 p-1 rounded-2xl border border-white/10">
           <button
             onClick={() => { setActiveTab("aqi"); setHoveredIndex(null); }}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+            className={`px-3.5 py-1.5 rounded-xl text-sm font-black transition-all cursor-pointer ${
               activeTab === "aqi" ? "bg-white text-emerald-800 shadow-md" : "text-white/60 hover:text-white"
             }`}
           >
@@ -146,7 +146,7 @@ export default function TrendCharts({ station }: TrendChartsProps) {
           </button>
           <button
             onClick={() => { setActiveTab("pm25"); setHoveredIndex(null); }}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+            className={`px-3.5 py-1.5 rounded-xl text-sm font-black transition-all cursor-pointer ${
               activeTab === "pm25" ? "bg-white text-emerald-800 shadow-md" : "text-white/60 hover:text-white"
             }`}
           >
@@ -268,28 +268,28 @@ export default function TrendCharts({ station }: TrendChartsProps) {
       </div>
 
       {/* Live Hover Detail Card */}
-      <div className="h-14 flex items-center justify-center bg-white/5 rounded-2xl px-4 border border-white/10 shadow-sm">
+      <div className="h-16 flex items-center justify-center bg-white/5 rounded-2xl px-4 border border-white/10 shadow-sm mt-4">
         {hoveredIndex !== null ? (
-          <div className="flex items-center gap-4 text-xs font-bold">
+          <div className="flex items-center gap-4 text-sm font-bold">
             <div className="flex items-center gap-1.5 text-white/80">
-              <Clock className="w-4 h-4 text-emerald-300" />
+              <Clock className="w-5 h-5 text-emerald-300" />
               <span>時間: <strong className="text-white font-mono">{points[hoveredIndex].hour}</strong></span>
             </div>
             <div className="flex items-center gap-2">
-              <span className={`w-2.5 h-2.5 rounded-full ${
+              <span className={`w-3 h-3 rounded-full ${
                 activeTab === "aqi" 
                   ? points[hoveredIndex].val <= 50 ? "bg-emerald-400" : points[hoveredIndex].val <= 100 ? "bg-amber-400" : "bg-orange-500"
                   : points[hoveredIndex].val <= 15 ? "bg-emerald-400" : points[hoveredIndex].val <= 35 ? "bg-amber-400" : "bg-orange-500"
               } shadow-sm`}></span>
               <span>
                 {activeTab === "aqi" ? "空氣品質指標 (AQI)" : "細微粒 (PM2.5)"}: 
-                <strong className="text-white font-mono ml-1 text-sm font-black">{points[hoveredIndex].val}</strong>
-                <span className="text-[10px] text-white/70 ml-1">{activeTab === "aqi" ? "" : "μg/m³"}</span>
+                <strong className="text-white font-mono ml-1 text-base font-black">{points[hoveredIndex].val}</strong>
+                <span className="text-xs text-white/70 ml-1">{activeTab === "aqi" ? "" : "μg/m³"}</span>
               </span>
             </div>
           </div>
         ) : (
-          <div className="flex items-center gap-2 text-white/70 text-[11px] font-bold">
+          <div className="flex items-center gap-2 text-white/70 text-xs font-bold">
             <span className="animate-bounce">💡</span>
             <span className="animate-pulse-slow">滑動或點擊折線上的節點，可以掌握一整天變化的具體細節喔！</span>
           </div>
@@ -299,19 +299,19 @@ export default function TrendCharts({ station }: TrendChartsProps) {
       {/* Quick Historic Summary */}
       <div className="grid grid-cols-2 gap-3 pt-1">
         <div className="p-3.5 rounded-2.5xl bg-white/10 border border-white/10 flex items-center gap-2.5 shadow-md">
-          <CalendarDays className="w-4.5 h-4.5 text-emerald-300 shrink-0" />
+          <CalendarDays className="w-5 h-5 text-emerald-300 shrink-0" />
           <div>
-            <div className="text-[10px] text-white/60 font-bold uppercase tracking-wider">今日低谷濃度</div>
-            <div className="text-sm font-black text-white font-mono mt-0.5">
+            <div className="text-xs text-white/60 font-bold uppercase tracking-wider">今日低谷濃度</div>
+            <div className="text-base font-black text-white font-mono mt-0.5">
               {Math.min(...values)} {activeTab === "aqi" ? "AQI" : "μg/m³"}
             </div>
           </div>
         </div>
         <div className="p-3.5 rounded-2.5xl bg-white/10 border border-white/10 flex items-center gap-2.5 shadow-md">
-          <CalendarDays className="w-4.5 h-4.5 text-orange-300 shrink-0" />
+          <CalendarDays className="w-5 h-5 text-orange-300 shrink-0" />
           <div>
-            <div className="text-[10px] text-white/60 font-bold uppercase tracking-wider">今日高峰濃度</div>
-            <div className="text-sm font-black text-white font-mono mt-0.5">
+            <div className="text-xs text-white/60 font-bold uppercase tracking-wider">今日高峰濃度</div>
+            <div className="text-base font-black text-white font-mono mt-0.5">
               {Math.max(...values)} {activeTab === "aqi" ? "AQI" : "μg/m³"}
             </div>
           </div>

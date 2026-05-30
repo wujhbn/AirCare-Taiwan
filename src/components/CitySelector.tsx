@@ -81,19 +81,19 @@ export default function CitySelector({
               <MapPin className="w-5.5 h-5.5" />
             </div>
             <div>
-              <div className="font-extrabold text-white text-sm tracking-tight flex items-center gap-1.5">
+              <div className="font-extrabold text-white text-base tracking-tight flex items-center gap-1.5">
                 <span>定位目前位置</span>
                 {isUsingGps && (
-                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-400 text-emerald-950 font-black tracking-widest uppercase">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-400 text-emerald-950 font-black tracking-widest uppercase">
                     使用中
                   </span>
                 )}
               </div>
-              <div className="text-white/75 text-xs mt-0.5 font-medium">自動媒合離您最近的監測站</div>
+              <div className="text-white/75 text-sm mt-0.5 font-medium">自動媒合離您最近的監測站</div>
             </div>
           </div>
           
-          <div className="flex items-center gap-1.5 text-xs font-bold shrink-0">
+          <div className="flex items-center gap-1.5 text-sm font-bold shrink-0">
             {detectingLocation ? (
               <div className="flex items-center gap-1 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full text-emerald-300">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
@@ -114,7 +114,7 @@ export default function CitySelector({
 
         {/* Dynamic sub-statuses to satisfy 'showing current detected location' */}
         {(gpsStatus === "success" && gpsCoords && selectedStation) && (
-          <div className="w-full mt-1 p-2.5 rounded-2xl bg-emerald-950/50 border border-emerald-500/30 text-[11px] text-emerald-100 font-semibold leading-relaxed flex flex-col gap-1">
+          <div className="w-full mt-1 p-3 rounded-2xl bg-emerald-950/50 border border-emerald-500/30 text-xs text-emerald-100 font-semibold leading-relaxed flex flex-col gap-1">
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
               <span>GPS 偵測成功！</span>
@@ -122,20 +122,20 @@ export default function CitySelector({
             <div className="text-emerald-300/90 font-mono">
               經緯座標：({gpsCoords.lat.toFixed(5)}° N, {gpsCoords.lon.toFixed(5)}° E)
             </div>
-            <div className="mt-0.5 text-white bg-emerald-900/60 self-start px-2 py-0.5 rounded-md text-[10px] font-black">
+            <div className="mt-0.5 text-white bg-emerald-900/60 self-start px-2 py-1 rounded-md text-xs font-black">
               已自動配對至最鄰近的「{selectedStation.sitename}」測站（位於 {selectedStation.county}）
             </div>
           </div>
         )}
 
         {gpsStatus === "error" && gpsErrorMessage && (
-          <div className="w-full mt-1 p-2.5 rounded-2xl bg-rose-950/50 border border-rose-500/30 text-[11px] text-rose-200 font-semibold leading-relaxed flex flex-col gap-1 shadow-inner">
+          <div className="w-full mt-1 p-3 rounded-2xl bg-rose-950/50 border border-rose-500/30 text-xs text-rose-200 font-semibold leading-relaxed flex flex-col gap-1 shadow-inner">
             <div className="flex items-center gap-1.5 text-rose-300">
-              <span className="text-xs">⚠️</span>
+              <span className="text-sm">⚠️</span>
               <span className="font-bold">定位偵測受阻</span>
             </div>
             <div className="text-white/80 leading-normal">{gpsErrorMessage}</div>
-            <div className="text-[10px] text-rose-300/70 mt-0.5">提示：若使用 iOS 裝置，請於「設定 &gt; 隱私權與安全性 &gt; 定位服務」中，確認已開放您的瀏覽器定位權限喔！</div>
+            <div className="text-xs text-rose-300/70 mt-0.5">提示：若使用 iOS 裝置，請於「設定 &gt; 隱私權與安全性 &gt; 定位服務」中，確認已開放您的瀏覽器定位權限喔！</div>
           </div>
         )}
       </button>
@@ -150,7 +150,7 @@ export default function CitySelector({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="搜尋測站名稱或城市 (如：板橋、台中)..."
-            className="w-full pl-10 pr-4 py-3.5 rounded-2xl bg-white/10 border border-white/20 text-white placeholder-white/50 text-sm focus:outline-none focus:bg-white/15 focus:border-white/40 transition-all shadow-md font-medium"
+            className="w-full pl-10 pr-4 py-3.5 rounded-2xl bg-white/10 border border-white/20 text-white placeholder-white/50 text-base focus:outline-none focus:bg-white/15 focus:border-white/40 transition-all shadow-md font-medium"
           />
         </div>
 
@@ -166,7 +166,7 @@ export default function CitySelector({
             <button
               key={tab.id}
               onClick={() => setSelectedRegion(tab.id)}
-              className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold tracking-wider transition-all cursor-pointer ${
+              className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-bold tracking-wider transition-all cursor-pointer ${
                 selectedRegion === tab.id
                   ? "bg-white text-emerald-900 shadow-xl border border-white"
                   : "bg-white/10 text-white/75 border border-white/10 hover:text-white hover:bg-white/15"
@@ -203,25 +203,25 @@ export default function CitySelector({
               >
                 <div className="flex items-start justify-between w-full">
                   <div>
-                    <span className="text-[10px] text-white/60 font-bold tracking-wider uppercase">{station.county}</span>
-                    <h4 className="font-black text-white text-sm mt-0.5 flex items-center gap-1 leading-tight">
+                    <span className="text-xs text-white/60 font-bold tracking-wider uppercase">{station.county}</span>
+                    <h4 className="font-black text-white text-base mt-0.5 flex items-center gap-1 leading-tight">
                       {station.sitename}
                       {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>}
                     </h4>
                   </div>
                   {/* AQI Pill */}
-                  <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-white/10 border border-white/10">
+                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white/10 border border-white/10">
                     <span className={`w-1.5 h-1.5 rounded-full ${badgeColor}`}></span>
-                    <span className="text-xs font-mono font-bold text-white">{station.aqi}</span>
+                    <span className="text-sm font-mono font-bold text-white">{station.aqi}</span>
                   </div>
                 </div>
 
-                <div className="mt-4 flex items-center justify-between w-full text-[11px] text-white/80 font-semibold gap-1">
+                <div className="mt-4 flex items-center justify-between w-full text-xs text-white/80 font-semibold gap-1">
                   <div className="flex gap-2">
-                    <span>細微粒: <strong className="font-mono text-white">{station.pm25}</strong></span>
+                    <span>細微粒: <strong className="font-mono text-white text-sm">{station.pm25}</strong></span>
                     <span>{station.temp}°C</span>
                   </div>
-                  <span className={`text-[10px] font-black ${
+                  <span className={`text-xs font-black ${
                     station.aqi <= 50 ? "text-emerald-300" :
                     station.aqi <= 100 ? "text-amber-300" :
                     station.aqi <= 150 ? "text-orange-300" : "text-red-300"
@@ -234,7 +234,7 @@ export default function CitySelector({
           })
         ) : (
           <div className="col-span-2 text-center py-12 rounded-3xl border border-dashed border-white/20 bg-white/5 backdrop-blur-sm">
-            <span className="text-white/60 text-xs font-semibold">沒有找到相符合的空氣觀測站</span>
+            <span className="text-white/60 text-sm font-semibold">沒有找到相符合的空氣觀測站</span>
           </div>
         )}
       </div>

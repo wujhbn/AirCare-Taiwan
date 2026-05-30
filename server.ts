@@ -95,7 +95,7 @@ async function startServer() {
       // 1. Check if we can fetch live data from MOENV API v2 or open JSON
       // Let's first try MOENV public JSON CDN (v2 output sometimes uploaded as open resources or v1 fallback)
       // The open data link:
-      const publicUrl = "https://opendata.moenv.gov.tw/api/v1/aqx_p_43?format=json";
+      const publicUrl = "https://data.moenv.gov.tw/api/v2/aqx_p_432?api_key=e8dd42e6-9b8b-43f8-991e-b3dee723a52d&limit=1000&sort=ImportDate%20desc&format=JSON";
       
       const response = await fetch(publicUrl, {
         signal: controller.signal,

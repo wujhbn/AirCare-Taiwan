@@ -78,12 +78,12 @@ export default function AQIDashboard({
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <h2 className="text-lg font-black text-white tracking-tight">{station.sitename}測站</h2>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/25 text-white border border-white/30 font-bold">
+              <h2 className="text-2xl font-black text-white tracking-tight">{station.sitename}測站</h2>
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-white/25 text-white border border-white/30 font-bold">
                 {station.county}
               </span>
             </div>
-            <p className="text-[10px] text-white/90 font-semibold tracking-wider flex items-center gap-1">
+            <p className="text-xs text-white/90 font-semibold tracking-wider flex items-center gap-1 mt-1">
               {isUsingGps && gpsCoords ? (
                 <>
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
@@ -117,7 +117,7 @@ export default function AQIDashboard({
         }`}></div>
 
         <div className="absolute top-4 left-4">
-          <span className={`px-3 py-1 text-[10px] font-black rounded-full uppercase tracking-widest ${category.color} ${category.textColor} border border-white/20 shadow-sm`}>
+          <span className={`px-4 py-1.5 text-xs font-black rounded-full uppercase tracking-widest ${category.color} ${category.textColor} border border-white/20 shadow-sm`}>
             {category.label}
           </span>
         </div>
@@ -149,15 +149,15 @@ export default function AQIDashboard({
 
           {/* Dial metrics overlay */}
           <div className="absolute text-center flex flex-col justify-center items-center">
-            <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">AQI 指數</span>
-            <span className="text-[6.5rem] font-black text-white font-sans mt-1 leading-none tracking-tighter drop-shadow-2xl">
+            <span className="text-xs font-bold text-white/60 uppercase tracking-widest">AQI 指數</span>
+            <span className="text-[7.5rem] font-black text-white font-sans mt-1 leading-none tracking-tighter drop-shadow-2xl">
               {station.aqi}
             </span>
           </div>
         </div>
 
-        <div className="w-full text-center mt-3 relative z-10 px-2 py-2 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm">
-          <p className="text-xs text-white/90 leading-relaxed font-medium">
+        <div className="w-full text-center mt-3 relative z-10 px-3 py-2 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm">
+          <p className="text-sm text-white/90 leading-relaxed font-medium">
             {category.description}
           </p>
         </div>
@@ -169,11 +169,11 @@ export default function AQIDashboard({
           {getAdviceIcon(station.aqi)}
         </div>
         <div className="space-y-1">
-          <span className="font-extrabold text-white text-xs flex items-center gap-1.5">
-            <HeartHandshake className="w-4 h-4 text-emerald-300" />
+          <span className="font-extrabold text-white text-sm flex items-center gap-1.5">
+            <HeartHandshake className="w-5 h-5 text-emerald-300" />
             <span>貼心健康防護建議</span>
           </span>
-          <p className="text-xs text-white/80 leading-relaxed font-medium">
+          <p className="text-sm text-white/80 leading-relaxed font-medium">
             {category.advice}
           </p>
         </div>
@@ -184,14 +184,14 @@ export default function AQIDashboard({
         
         {/* PM2.5 with a gorgeous High Density progress bar */}
         <div className="p-5 rounded-3xl glass-panel relative overflow-hidden shadow-xl flex flex-col justify-between h-36">
-          <div className="flex items-center justify-between text-white/70 text-[11px] font-bold tracking-wider">
+          <div className="flex items-center justify-between text-white/70 text-xs font-bold tracking-wider">
             <span>PM2.5 細微粒</span>
-            <span className="font-semibold text-[10px]">μg/m³</span>
+            <span className="font-semibold text-xs">μg/m³</span>
           </div>
           <div>
-            <div className="text-3xl font-black font-sans text-white mt-1.5 flex items-baseline gap-1">
+            <div className="text-4xl font-black font-sans text-white mt-1.5 flex items-baseline gap-1">
               <span>{station.pm25}</span>
-              <span className="text-xs font-normal text-white/60">μg</span>
+              <span className="text-sm font-normal text-white/60">μg</span>
             </div>
             {/* High Density progress indicator */}
             <div className="w-full h-1.5 bg-white/20 rounded-full mt-3 overflow-hidden">
@@ -205,14 +205,14 @@ export default function AQIDashboard({
 
         {/* PM10 with a gorgeous High Density progress bar */}
         <div className="p-5 rounded-3xl glass-panel relative overflow-hidden shadow-xl flex flex-col justify-between h-36">
-          <div className="flex items-center justify-between text-white/70 text-[11px] font-bold tracking-wider">
+          <div className="flex items-center justify-between text-white/70 text-xs font-bold tracking-wider">
             <span>PM10 懸浮微粒</span>
-            <span className="font-semibold text-[10px]">μg/m³</span>
+            <span className="font-semibold text-xs">μg/m³</span>
           </div>
           <div>
-            <div className="text-3xl font-black font-sans text-white mt-1.5 flex items-baseline gap-1">
+            <div className="text-4xl font-black font-sans text-white mt-1.5 flex items-baseline gap-1">
               <span>{station.pm10}</span>
-              <span className="text-xs font-normal text-white/60">μg</span>
+              <span className="text-sm font-normal text-white/60">μg</span>
             </div>
             {/* High Density progress indicator */}
             <div className="w-full h-1.5 bg-white/20 rounded-full mt-3 overflow-hidden">
@@ -225,41 +225,41 @@ export default function AQIDashboard({
         </div>
 
         {/* Temperature */}
-        <div className="p-5 rounded-3xl glass-panel relative overflow-hidden shadow-xl flex flex-col justify-between h-32">
-          <div className="flex items-center gap-1.5 text-white/70 text-[11px] font-bold tracking-wider">
-            <Thermometer className="w-4 h-4 text-orange-400" />
+        <div className="p-5 rounded-3xl glass-panel relative overflow-hidden shadow-xl flex flex-col justify-between h-36">
+          <div className="flex items-center gap-1.5 text-white/70 text-xs font-bold tracking-wider">
+            <Thermometer className="w-5 h-5 text-orange-400" />
             <span>目前溫度</span>
           </div>
           <div>
-            <div className="text-3xl font-black font-sans text-white flex items-baseline">
+            <div className="text-4xl font-black font-sans text-white flex items-baseline">
               <span>{station.temp}</span>
-              <span className="text-base font-normal text-white/60 ml-0.5">°C</span>
+              <span className="text-lg font-normal text-white/60 ml-0.5">°C</span>
             </div>
-            <p className="text-[10px] text-white/60 font-semibold mt-1">體感溫度約 {Math.max(Number(station.temp) - 2, 0)}°C</p>
+            <p className="text-xs text-white/60 font-semibold mt-1">體感約 {Math.max(Number(station.temp) - 2, 0)}°C</p>
           </div>
         </div>
-
+        
         {/* Humidity */}
-        <div className="p-5 rounded-3xl glass-panel relative overflow-hidden shadow-xl flex flex-col justify-between h-32">
-          <div className="flex items-center gap-1.5 text-white/70 text-[11px] font-bold tracking-wider">
-            <Droplets className="w-4 h-4 text-sky-400" />
+        <div className="p-5 rounded-3xl glass-panel relative overflow-hidden shadow-xl flex flex-col justify-between h-36">
+          <div className="flex items-center gap-1.5 text-white/70 text-xs font-bold tracking-wider">
+            <Droplets className="w-5 h-5 text-sky-400" />
             <span>目前濕度</span>
           </div>
           <div>
-            <div className="text-3xl font-black font-sans text-white flex items-baseline">
+            <div className="text-4xl font-black font-sans text-white flex items-baseline">
               <span>{station.humidity}</span>
-              <span className="text-base font-normal text-white/60 ml-0.5">%</span>
+              <span className="text-lg font-normal text-white/60 ml-0.5">%</span>
             </div>
-            <p className="text-[10px] text-white/60 font-semibold mt-1">大氣含水量適中</p>
+            <p className="text-xs text-white/60 font-semibold mt-1">大氣含水量適中</p>
           </div>
         </div>
 
       </div>
 
       {/* Sync Details Footer */}
-      <div className="flex items-center justify-center gap-1.5 text-[10px] text-white/60 pt-1 font-semibold">
-        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span>智慧守護：5 分鐘自動刷新。最後更新時間：{lastUpdated}</span>
+      <div className="flex items-center justify-center gap-1.5 text-xs text-white/60 pt-2 pb-2 font-semibold">
+        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>5 分鐘自動刷新。最後更新：{lastUpdated}</span>
       </div>
 
     </div>

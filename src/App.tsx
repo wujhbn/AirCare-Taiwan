@@ -123,7 +123,7 @@ export default function App() {
       console.warn("Backend proxy failed or unavailable. Resorting to client-side direct fetch:", err);
       // Client-Side Fallback Fetch directly from MOENV Open API
       try {
-        const publicUrl = "https://opendata.moenv.gov.tw/api/v1/aqx_p_43?format=json";
+        const publicUrl = "https://data.moenv.gov.tw/api/v2/aqx_p_432?api_key=e8dd42e6-9b8b-43f8-991e-b3dee723a52d&limit=1000&sort=ImportDate%20desc&format=JSON";
         const fallbackRes = await fetch(publicUrl);
         if (fallbackRes.ok) {
           const rawJson: any = await fallbackRes.json();
@@ -155,11 +155,55 @@ export default function App() {
     // Ultimate Fallback: Basic hardcoded stations if everything fails
     if (!successfulData || successfulData.length === 0) {
       successfulData = [
+        { county: "基隆市", sitename: "基隆", status: "良好", aqi: 24, pm25: 6, pm10: 18, temp: 24, humidity: 82, publishtime: new Date().toISOString() },
         { county: "台北市", sitename: "陽明", status: "良好", aqi: 18, pm25: 4, pm10: 12, temp: 21, humidity: 88, publishtime: new Date().toISOString() },
+        { county: "台北市", sitename: "士林", status: "良好", aqi: 32, pm25: 9, pm10: 22, temp: 26, humidity: 75, publishtime: new Date().toISOString() },
+        { county: "台北市", sitename: "中山", status: "普通", aqi: 52, pm25: 16, pm10: 34, temp: 27, humidity: 73, publishtime: new Date().toISOString() },
+        { county: "台北市", sitename: "萬華", status: "普通", aqi: 55, pm25: 17, pm10: 36, temp: 27, humidity: 74, publishtime: new Date().toISOString() },
+        { county: "台北市", sitename: "古亭", status: "普通", aqi: 48, pm25: 14, pm10: 30, temp: 26, humidity: 76, publishtime: new Date().toISOString() },
+        { county: "新北市", sitename: "汐止", status: "普通", aqi: 42, pm25: 12, pm10: 28, temp: 25, humidity: 80, publishtime: new Date().toISOString() },
         { county: "新北市", sitename: "板橋", status: "普通", aqi: 58, pm25: 18, pm10: 39, temp: 27, humidity: 72, publishtime: new Date().toISOString() },
+        { county: "新北市", sitename: "土城", status: "普通", aqi: 51, pm25: 15, pm10: 32, temp: 26, humidity: 76, publishtime: new Date().toISOString() },
+        { county: "新北市", sitename: "新莊", status: "普通", aqi: 62, pm25: 20, pm10: 42, temp: 27, humidity: 73, publishtime: new Date().toISOString() },
+        { county: "新北市", sitename: "淡水", status: "良好", aqi: 35, pm25: 10, pm10: 24, temp: 24, humidity: 81, publishtime: new Date().toISOString() },
+        { county: "新北市", sitename: "林口", status: "普通", aqi: 53, pm25: 16, pm10: 35, temp: 24, humidity: 83, publishtime: new Date().toISOString() },
+        { county: "桃園市", sitename: "桃園", status: "普通", aqi: 64, pm25: 21, pm10: 44, temp: 27, humidity: 71, publishtime: new Date().toISOString() },
+        { county: "桃園市", sitename: "中壢", status: "普通", aqi: 68, pm25: 22, pm10: 46, temp: 27, humidity: 72, publishtime: new Date().toISOString() },
+        { county: "桃園市", sitename: "平鎮", status: "普通", aqi: 58, pm25: 18, pm10: 38, temp: 26, humidity: 75, publishtime: new Date().toISOString() },
+        { county: "新竹市", sitename: "新竹", status: "良好", aqi: 41, pm25: 11, pm10: 26, temp: 26, humidity: 77, publishtime: new Date().toISOString() },
+        { county: "新竹縣", sitename: "竹東", status: "良好", aqi: 38, pm25: 10, pm10: 23, temp: 25, humidity: 80, publishtime: new Date().toISOString() },
+        { county: "苗栗縣", sitename: "苗栗", status: "良好", aqi: 45, pm25: 13, pm10: 29, temp: 26, humidity: 76, publishtime: new Date().toISOString() },
+        { county: "苗栗縣", sitename: "三義", status: "良好", aqi: 36, pm25: 9, pm10: 22, temp: 24, humidity: 81, publishtime: new Date().toISOString() },
+        { county: "台中市", sitename: "豐原", status: "普通", aqi: 57, pm25: 17, pm10: 38, temp: 26, humidity: 74, publishtime: new Date().toISOString() },
+        { county: "台中市", sitename: "沙鹿", status: "普通", aqi: 63, pm25: 20, pm10: 43, temp: 25, humidity: 78, publishtime: new Date().toISOString() },
         { county: "台中市", sitename: "台中", status: "普通", aqi: 72, pm25: 24, pm10: 51, temp: 28, humidity: 68, publishtime: new Date().toISOString() },
+        { county: "台中市", sitename: "大里", status: "普通", aqi: 75, pm25: 26, pm10: 53, temp: 27, humidity: 70, publishtime: new Date().toISOString() },
+        { county: "彰化縣", sitename: "彰化", status: "普通", aqi: 78, pm25: 27, pm10: 55, temp: 28, humidity: 69, publishtime: new Date().toISOString() },
+        { county: "彰化縣", sitename: "二林", status: "對敏感族群不健康", aqi: 105, pm25: 37, pm10: 72, temp: 27, humidity: 72, publishtime: new Date().toISOString() },
+        { county: "南投縣", sitename: "南投", status: "普通", aqi: 62, pm25: 19, pm10: 39, temp: 27, humidity: 75, publishtime: new Date().toISOString() },
+        { county: "南投縣", sitename: "埔里", status: "良好", aqi: 44, pm25: 12, pm10: 25, temp: 23, humidity: 82, publishtime: new Date().toISOString() },
+        { county: "雲林縣", sitename: "斗六", status: "對敏感族群不健康", aqi: 112, pm25: 40, pm10: 78, temp: 28, humidity: 70, publishtime: new Date().toISOString() },
+        { county: "雲林縣", sitename: "崙背", status: "對敏感族群不健康", aqi: 120, pm25: 43, pm10: 84, temp: 27, humidity: 73, publishtime: new Date().toISOString() },
+        { county: "嘉義市", sitename: "嘉義", status: "對敏感族群不健康", aqi: 108, pm25: 38, pm10: 75, temp: 28, humidity: 71, publishtime: new Date().toISOString() },
+        { county: "嘉義縣", sitename: "朴子", status: "對敏感族群不健康", aqi: 115, pm25: 41, pm10: 80, temp: 28, humidity: 72, publishtime: new Date().toISOString() },
+        { county: "台南市", sitename: "新營", status: "對敏感族群不健康", aqi: 125, pm25: 45, pm10: 89, temp: 28, humidity: 71, publishtime: new Date().toISOString() },
+        { county: "台南市", sitename: "安南", status: "對敏感族群不健康", aqi: 132, pm25: 48, pm10: 95, temp: 29, humidity: 68, publishtime: new Date().toISOString() },
+        { county: "台南市", sitename: "台南", status: "對敏感族群不健康", aqi: 128, pm25: 46, pm10: 92, temp: 29, humidity: 69, publishtime: new Date().toISOString() },
+        { county: "高雄市", sitename: "美濃", status: "普通", aqi: 70, pm25: 23, pm10: 48, temp: 27, humidity: 75, publishtime: new Date().toISOString() },
         { county: "高雄市", sitename: "左營", status: "對敏感族群不健康", aqi: 138, pm25: 51, pm10: 98, temp: 30, humidity: 65, publishtime: new Date().toISOString() },
-        { county: "宜蘭縣", sitename: "宜蘭", status: "良好", aqi: 22, pm25: 5, pm10: 15, temp: 23, humidity: 85, publishtime: new Date().toISOString() }
+        { county: "高雄市", sitename: "前金", status: "對敏感族群不健康", aqi: 135, pm25: 50, pm10: 96, temp: 30, humidity: 66, publishtime: new Date().toISOString() },
+        { county: "高雄市", sitename: "小港", status: "不健康", aqi: 153, pm25: 59, pm10: 112, temp: 30, humidity: 64, publishtime: new Date().toISOString() },
+        { county: "高雄市", sitename: "鳳山", status: "對敏感族群不健康", aqi: 142, pm25: 53, pm10: 102, temp: 29, humidity: 67, publishtime: new Date().toISOString() },
+        { county: "屏東縣", sitename: "屏東", status: "對敏感族群不健康", aqi: 122, pm25: 44, pm10: 87, temp: 29, humidity: 70, publishtime: new Date().toISOString() },
+        { county: "屏東縣", sitename: "潮州", status: "普通", aqi: 85, pm25: 29, pm10: 59, temp: 28, humidity: 73, publishtime: new Date().toISOString() },
+        { county: "屏東縣", sitename: "恆春", status: "良好", aqi: 15, pm25: 3, pm10: 10, temp: 27, humidity: 80, publishtime: new Date().toISOString() },
+        { county: "宜蘭縣", sitename: "宜蘭", status: "良好", aqi: 22, pm25: 5, pm10: 15, temp: 23, humidity: 85, publishtime: new Date().toISOString() },
+        { county: "宜蘭縣", sitename: "冬山", status: "良好", aqi: 25, pm25: 6, pm10: 17, temp: 23, humidity: 84, publishtime: new Date().toISOString() },
+        { county: "花蓮縣", sitename: "花蓮", status: "良好", aqi: 19, pm25: 4, pm10: 12, temp: 24, humidity: 81, publishtime: new Date().toISOString() },
+        { county: "台東縣", sitename: "台東", status: "良好", aqi: 17, pm25: 3, pm10: 11, temp: 25, humidity: 79, publishtime: new Date().toISOString() },
+        { county: "澎湖縣", sitename: "澎湖", status: "良好", aqi: 30, pm25: 8, pm10: 20, temp: 25, humidity: 80, publishtime: new Date().toISOString() },
+        { county: "金門縣", sitename: "金門", status: "普通", aqi: 82, pm25: 28, pm10: 62, temp: 24, humidity: 82, publishtime: new Date().toISOString() },
+        { county: "連江縣", sitename: "馬祖", status: "普通", aqi: 75, pm25: 25, pm10: 58, temp: 20, humidity: 90, publishtime: new Date().toISOString() }
       ];
     }
     
@@ -296,10 +340,10 @@ export default function App() {
             </svg>
           </div>
           <div>
-            <h1 className="text-base font-bold leading-tight tracking-tight text-white flex items-center gap-1.5">
-              AirCare <span className="text-[10px] bg-white/20 text-white px-1.5 py-0.5 rounded-full font-black border border-white/25">TW</span>
+            <h1 className="text-xl font-bold leading-tight tracking-tight text-white flex items-center gap-1.5">
+              AirCare <span className="text-xs bg-white/20 text-white px-2 py-0.5 rounded-full font-black border border-white/25">TW</span>
             </h1>
-            <p className="text-[10px] text-white/70 uppercase tracking-widest font-semibold">智慧空氣守護者</p>
+            <p className="text-xs text-white/70 uppercase tracking-widest font-semibold mt-1">智慧空氣守護者</p>
           </div>
         </div>
 
@@ -308,7 +352,7 @@ export default function App() {
           {canInstall && (
             <button
               onClick={triggerNativeInstall}
-              className="flex items-center gap-1.5 bg-white text-emerald-700 font-bold text-xs px-4 py-2 rounded-full shadow-xl hover:scale-105 active:scale-95 transition-all"
+              className="flex items-center gap-1.5 bg-white text-emerald-700 font-bold text-sm px-4 py-2 rounded-full shadow-xl hover:scale-105 active:scale-95 transition-all"
             >
               <Download className="w-3.5 h-3.5" />
               <span>安裝 App</span>
@@ -379,8 +423,8 @@ export default function App() {
             activeTab === "dashboard" ? "text-white font-extrabold" : "text-white/50 hover:text-white/80"
           }`}
         >
-          <Activity className="w-5.5 h-5.5" />
-          <span className="text-[10px] font-bold">品質監測</span>
+          <Activity className="w-6 h-6" />
+          <span className="text-xs font-bold">品質監測</span>
           {activeTab === "dashboard" && (
             <span className="absolute bottom-0 w-1 h-1 rounded-full bg-white shadow-md shadow-white"></span>
           )}
@@ -394,8 +438,8 @@ export default function App() {
             activeTab === "cities" ? "text-white font-extrabold" : "text-white/50 hover:text-white/80"
           }`}
         >
-          <Map className="w-5.5 h-5.5" />
-          <span className="text-[10px] font-bold">地區觀測</span>
+          <Map className="w-6 h-6" />
+          <span className="text-xs font-bold">地區觀測</span>
           {activeTab === "cities" && (
             <span className="absolute bottom-0 w-1 h-1 rounded-full bg-white shadow-md shadow-white"></span>
           )}
@@ -408,8 +452,8 @@ export default function App() {
             activeTab === "trends" ? "text-white font-extrabold" : "text-white/50 hover:text-white/80"
           }`}
         >
-          <TrendingUp className="w-5.5 h-5.5" />
-          <span className="text-[10px] font-bold">趨勢分析</span>
+          <TrendingUp className="w-6 h-6" />
+          <span className="text-xs font-bold">趨勢分析</span>
           {activeTab === "trends" && (
             <span className="absolute bottom-0 w-1 h-1 rounded-full bg-white shadow-md shadow-white"></span>
           )}
@@ -423,8 +467,8 @@ export default function App() {
             activeTab === "alerts" ? "text-white font-extrabold" : "text-white/50 hover:text-white/80"
           }`}
         >
-          <Bell className="w-5.5 h-5.5" />
-          <span className="text-[10px] font-bold">通報設定</span>
+          <Bell className="w-6 h-6" />
+          <span className="text-xs font-bold">通報設定</span>
           {activeTab === "alerts" && (
             <span className="absolute bottom-0 w-1 h-1 rounded-full bg-white shadow-md shadow-white"></span>
           )}
@@ -442,10 +486,10 @@ export default function App() {
               ? "bg-rose-950/95 border-rose-500/40 text-rose-100 shadow-rose-950/40"
               : "bg-slate-900/95 border-emerald-500/20 text-slate-100 shadow-slate-950/40"
           }`}>
-            <span className="text-base shrink-0 mt-0.5 select-none">
+            <span className="text-xl shrink-0 mt-0.5 select-none">
               {toast.type === "success" ? "🟢" : toast.type === "error" ? "⚠️" : "💡"}
             </span>
-            <div className="flex-1 text-xs font-bold leading-relaxed">{toast.message}</div>
+            <div className="flex-1 text-sm font-bold leading-relaxed">{toast.message}</div>
           </div>
         </div>
       )}

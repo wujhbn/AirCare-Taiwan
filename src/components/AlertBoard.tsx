@@ -44,7 +44,8 @@ export default function AlertBoard({ currentStation }: AlertBoardProps) {
 
   const requestNotificationPermission = async () => {
     if (!("Notification" in window)) {
-      alert("此瀏覽器不支援 PWA 原生通知功能");
+      setTestTriggered(true);
+      setTimeout(() => setTestTriggered(false), 5000);
       return;
     }
 
@@ -98,17 +99,17 @@ export default function AlertBoard({ currentStation }: AlertBoardProps) {
             {isOnline ? <Wifi className="w-5.5 h-5.5 text-emerald-300" /> : <WifiOff className="w-5.5 h-5.5 text-amber-300 shrink-0" />}
           </div>
           <div>
-            <span className="font-extrabold text-sm block tracking-tight">
+            <span className="font-extrabold text-base block tracking-tight">
               {isOnline ? "網路通訊已建立" : "離線模式運作中 (Offline Code)"}
             </span>
-            <span className="text-[10px] text-white/80 block mt-0.5 font-medium leading-relaxed">
+            <span className="text-xs text-white/80 block mt-0.5 font-medium leading-relaxed">
               {isOnline 
                 ? "即時擷取環保署 80 個測站最新大氣數據" 
                 : "AirCare 已將歷史測站、介面快取。數據保持可用！"}
             </span>
           </div>
         </div>
-        <span className={`text-[10px] uppercase tracking-widest font-black px-2.5 py-1 rounded-full border shadow-inner ${
+        <span className={`text-xs uppercase tracking-widest font-black px-2.5 py-1 rounded-full border shadow-inner ${
           isOnline ? "bg-emerald-500/10 text-emerald-200 border-emerald-500/20" : "bg-amber-500/10 text-amber-200 border-amber-500/20"
         }`}>
           {isOnline ? "Live" : "Cached"}
@@ -126,15 +127,15 @@ export default function AlertBoard({ currentStation }: AlertBoardProps) {
               <Bell className="w-4.5 h-4.5 text-emerald-300" />
             </div>
             <div>
-              <h3 className="font-black text-white text-sm">系統即時空氣預警</h3>
-              <p className="text-[10px] text-white/70 mt-0.5 font-medium">當 AQI &gt; 100 或 PM2.5 超標時，發送警報通知</p>
+              <h3 className="font-black text-white text-base">系統即時空氣預警</h3>
+              <p className="text-xs text-white/70 mt-0.5 font-medium">當 AQI &gt; 100 或 PM2.5 超標時，發送警報通知</p>
             </div>
           </div>
           
           <button
             id="notification-ask-btn"
             onClick={requestNotificationPermission}
-            className={`px-4 py-2 rounded-full text-xs font-black transition-all cursor-pointer shadow-md shrink-0 ${
+            className={`px-4 py-2 rounded-full text-sm font-black transition-all cursor-pointer shadow-md shrink-0 ${
               notificationStatus === "granted"
                 ? "bg-white/15 text-white/90 border border-white/20"
                 : "bg-white text-emerald-800 hover:scale-105 active:scale-95 border border-white"
@@ -145,18 +146,18 @@ export default function AlertBoard({ currentStation }: AlertBoardProps) {
         </div>
 
         {/* Dynamic testing panel */}
-        <div className="p-4 rounded-2.5xl bg-white/5 border border-white/10 text-xs text-white/90 space-y-3">
-          <p className="leading-relaxed font-medium text-[11px]">
+        <div className="p-4 rounded-2.5xl bg-white/5 border border-white/10 text-sm text-white/90 space-y-3">
+          <p className="leading-relaxed font-medium text-xs">
             透過 PWA 的背景執行緒，當空氣品質突然急劇惡化時，APP 會在手機上方通知列發送警告，提醒家中的敏感老人及孩童防護。
           </p>
           <div className="flex items-center justify-between gap-2.5 pt-2 border-t border-white/10">
-            <span className="text-[10px] text-white/60 font-bold font-mono">
+            <span className="text-xs text-white/60 font-bold font-mono">
               當前測站：{currentStation?.sitename || "無選取"} (AQI: {currentStation?.aqi || 0})
             </span>
             <button
               id="trigger-alert-btn"
               onClick={triggerTestAlert}
-              className="text-[11px] text-emerald-300 font-extrabold hover:text-emerald-200 flex items-center gap-1 active:scale-95 transition-all cursor-pointer bg-white/10 px-2.5 py-1 rounded-full border border-white/10 shadow-sm"
+              className="text-xs text-emerald-300 font-extrabold hover:text-emerald-200 flex items-center gap-1 active:scale-95 transition-all cursor-pointer bg-white/10 px-2.5 py-1 rounded-full border border-white/10 shadow-sm"
             >
               <span>模擬測試預警通知</span>
               <span>⚡</span>
@@ -166,8 +167,8 @@ export default function AlertBoard({ currentStation }: AlertBoardProps) {
 
         {/* Fallback mock alert banner */}
         {testTriggered && (
-          <div className="p-3.5 bg-sky-500/20 border border-sky-400/30 rounded-2.5xl flex items-center gap-2.5 text-[11px] text-white font-medium shadow-md">
-            <CheckCircle2 className="w-4.5 h-4.5 text-sky-300 shrink-0" />
+          <div className="p-3.5 bg-sky-500/20 border border-sky-400/30 rounded-2.5xl flex items-center gap-2.5 text-xs text-white font-medium shadow-md">
+            <CheckCircle2 className="w-5 h-5 text-sky-300 shrink-0" />
             <p className="leading-relaxed">
               【模擬推播】<strong>{currentStation?.sitename}測站空氣拉警報</strong> - PM2.5 已偏高，外出建議攜帶醫用口罩防護。
             </p>
@@ -179,11 +180,11 @@ export default function AlertBoard({ currentStation }: AlertBoardProps) {
       <div className="p-5 rounded-[2.2rem] glass-panel space-y-4 border border-white/20 shadow-2xl">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-white/10 rounded-xl border border-white/15">
-            <Smartphone className="w-4.5 h-4.5 text-emerald-300" />
+            <Smartphone className="w-5 h-5 text-emerald-300" />
           </div>
           <div>
-            <h3 className="font-black text-white text-sm">如何將 AirCare 安裝到手機？</h3>
-            <p className="text-[10px] text-white/70 mt-0.5 font-medium">安裝後即可像原生 App 一樣，享有獨立視窗與極速體驗</p>
+            <h3 className="font-black text-white text-base">如何將 AirCare 安裝到手機？</h3>
+            <p className="text-xs text-white/70 mt-0.5 font-medium">安裝後即可像原生 App 一樣，享有獨立視窗與極速體驗</p>
           </div>
         </div>
 
@@ -191,7 +192,7 @@ export default function AlertBoard({ currentStation }: AlertBoardProps) {
         <div className="grid grid-cols-2 bg-white/10 p-1 rounded-2xl border border-white/10">
           <button
             onClick={() => setActiveInstructionTab("ios")}
-            className={`py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+            className={`py-2.5 rounded-xl text-sm font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               activeInstructionTab === "ios" ? "bg-white text-emerald-800 shadow-xl" : "text-white/60 hover:text-white"
             }`}
           >
@@ -199,7 +200,7 @@ export default function AlertBoard({ currentStation }: AlertBoardProps) {
           </button>
           <button
             onClick={() => setActiveInstructionTab("android")}
-            className={`py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+            className={`py-2.5 rounded-xl text-sm font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               activeInstructionTab === "android" ? "bg-white text-emerald-800 shadow-xl" : "text-white/60 hover:text-white"
             }`}
           >
@@ -209,64 +210,64 @@ export default function AlertBoard({ currentStation }: AlertBoardProps) {
 
         {/* Step details */}
         {activeInstructionTab === "ios" ? (
-          <div className="space-y-3.5 text-xs text-white/90 pt-1">
+          <div className="space-y-3.5 text-sm text-white/90 pt-1">
             <div className="flex gap-3.5 items-start">
-              <span className="w-6 h-6 rounded-full bg-white/15 border border-white/25 text-[11px] flex items-center justify-center font-black text-white shrink-0">1</span>
+              <span className="w-6 h-6 rounded-full bg-white/15 border border-white/25 text-xs flex items-center justify-center font-black text-white shrink-0">1</span>
               <div>
                 <p className="font-extrabold text-white">使用 Safari 瀏覽器打開本頁</p>
-                <p className="text-[11px] text-white/75 mt-0.5 leading-relaxed font-semibold">iOS 限定使用內建的 Safari 瀏覽器才能完整支援 PWA 安裝功能。</p>
+                <p className="text-xs text-white/75 mt-0.5 leading-relaxed font-semibold">iOS 限定使用內建的 Safari 瀏覽器才能完整支援 PWA 安裝功能。</p>
               </div>
             </div>
             
             <div className="flex gap-3.5 items-start">
-              <span className="w-6 h-6 rounded-full bg-white/15 border border-white/25 text-[11px] flex items-center justify-center font-black text-white shrink-0">2</span>
+              <span className="w-6 h-6 rounded-full bg-white/15 border border-white/25 text-xs flex items-center justify-center font-black text-white shrink-0">2</span>
               <div>
                 <p className="font-extrabold text-white flex items-center gap-1 flex-wrap">
                   點擊瀏覽器下方工具列的「分享」按鈕
-                  <span className="inline-flex items-center bg-white/10 px-2 py-0.5 rounded-md border border-white/15 text-[10px] text-white font-bold gap-1">
-                    <Share className="w-3 h-3 text-emerald-300 inline" /> 分享
+                  <span className="inline-flex items-center bg-white/10 px-2 py-0.5 rounded-md border border-white/15 text-xs text-white font-bold gap-1">
+                    <Share className="w-4 h-4 text-emerald-300 inline" /> 分享
                   </span>
                 </p>
-                <p className="text-[11px] text-white/75 mt-0.5 leading-relaxed font-semibold">即點擊底部一帶有向上箭頭的正方形圖示。</p>
+                <p className="text-xs text-white/75 mt-0.5 leading-relaxed font-semibold">即點擊底部一帶有向上箭頭的正方形圖示。</p>
               </div>
             </div>
 
             <div className="flex gap-3.5 items-start">
-              <span className="w-6 h-6 rounded-full bg-white/15 border border-white/25 text-[11px] flex items-center justify-center font-black text-white shrink-0">3</span>
+              <span className="w-6 h-6 rounded-full bg-white/15 border border-white/25 text-xs flex items-center justify-center font-black text-white shrink-0">3</span>
               <div>
                 <p className="font-extrabold text-white flex items-center gap-1 flex-wrap">
                   向下滾動並點選「加入主畫面」
-                  <span className="inline-flex items-center bg-white/10 px-2 py-0.5 rounded-md border border-white/15 text-[10px] text-white font-bold gap-1">
-                    <PlusSquare className="w-3 h-3 text-emerald-300" /> 加入主畫面
+                  <span className="inline-flex items-center bg-white/10 px-2 py-0.5 rounded-md border border-white/15 text-xs text-white font-bold gap-1">
+                    <PlusSquare className="w-4 h-4 text-emerald-300" /> 加入主畫面
                   </span>
                 </p>
-                <p className="text-[11px] text-white/75 mt-0.5 leading-relaxed font-semibold">點擊右上角的「新增」，手機桌面就會出現專屬 AirCare 的美麗綠精靈圖示！</p>
+                <p className="text-xs text-white/75 mt-0.5 leading-relaxed font-semibold">點擊右上角的「新增」，手機桌面就會出現專屬 AirCare 的美麗綠精靈圖示！</p>
               </div>
             </div>
           </div>
         ) : (
-          <div className="space-y-3.5 text-xs text-white/90 pt-1">
+          <div className="space-y-3.5 text-sm text-white/90 pt-1">
             <div className="flex gap-3.5 items-start">
-              <span className="w-6 h-6 rounded-full bg-white/15 border border-white/25 text-[11px] flex items-center justify-center font-black text-white shrink-0">1</span>
+              <span className="w-6 h-6 rounded-full bg-white/15 border border-white/25 text-xs flex items-center justify-center font-black text-white shrink-0">1</span>
               <div>
                 <p className="font-extrabold text-white">點擊瀏覽器系統選單</p>
-                <p className="text-[11px] text-white/75 mt-0.5 leading-relaxed font-semibold">在手機 Chrome 或者是 Edge 瀏覽器右上角點擊三個圓點「選單」圖示。</p>
+                <p className="text-xs text-white/75 mt-0.5 leading-relaxed font-semibold">在手機 Chrome 或者是 Edge 瀏覽器右上角點擊三個圓點「選單」圖示。</p>
               </div>
             </div>
             
             <div className="flex gap-3.5 items-start">
-              <span className="w-6 h-6 rounded-full bg-white/15 border border-white/25 text-[11px] flex items-center justify-center font-black text-white shrink-0">2</span>
+              <span className="w-6 h-6 rounded-full bg-white/15 border border-white/25 text-xs flex items-center justify-center font-black text-white shrink-0">2</span>
               <div>
                 <p className="font-extrabold text-white">點選「安裝應用程式」或「加入主畫面」</p>
-                <p className="text-[11px] text-white/75 mt-0.5 leading-relaxed font-semibold">當看見安裝視窗跳出後，點擊「安裝」確認即可完成。</p>
+                <p className="text-xs text-white/75 mt-0.5 leading-relaxed font-semibold">當看見安裝視窗跳出後，點擊「安裝」確認即可完成。</p>
               </div>
             </div>
 
             <div className="flex gap-3.5 items-start">
-              <span className="w-6 h-6 rounded-full bg-white/15 border border-white/25 text-[11px] flex items-center justify-center font-black text-white shrink-0">3</span>
+              <span className="w-6 h-6 rounded-full bg-white/15 border border-white/25 text-xs flex items-center justify-center font-black text-white shrink-0">3</span>
               <div>
                 <p className="font-extrabold text-white">享受獨立視窗極致體驗</p>
-                <p className="text-[11px] text-white/75 mt-0.5 leading-relaxed font-semibold">桌面上的圖示啟動會隱藏瀏覽器網址列，具有滑順原生轉場、更低的電量消耗。</p>
+                <p className="text-xs text-white/75 mt-0.5 leading-relaxed font-semibold">桌面上的圖示啟動會隱藏瀏覽器網址列，具有滑順原生轉場、更低的電量消耗。</p>
               </div>
             </div>
           </div>
