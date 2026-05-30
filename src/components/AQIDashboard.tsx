@@ -81,11 +81,16 @@ export default function AQIDashboard({
       {/* Large AQI Dial Widget */}
       <div className="flex flex-col items-center justify-center p-8 rounded-[2.5rem] glass-panel-premium relative overflow-hidden shadow-2xl border border-white/20">
         {/* Accent dynamic glow spot background */}
-        <div className={`absolute -right-20 -bottom-20 w-48 h-48 rounded-full blur-[90px] opacity-50 pointer-events-none transition-all ${
-          station.aqi <= 50 ? "bg-emerald-500" :
-          station.aqi <= 100 ? "bg-amber-500" :
-          station.aqi <= 150 ? "bg-orange-500" : "bg-red-500"
-        }`}></div>
+        <div 
+          className="absolute inset-0 pointer-events-none transition-all opacity-40 mix-blend-screen"
+          style={{
+            background: `radial-gradient(circle at 100% 100%, ${
+              station.aqi <= 50 ? "#10b981" :
+              station.aqi <= 100 ? "#f59e0b" :
+              station.aqi <= 150 ? "#f97316" : "#ef4444"
+            } 0%, transparent 70%)`
+          }}
+        ></div>
 
         <div className="absolute top-4 left-4">
           <span className={`px-4 py-1.5 text-xs font-black rounded-full uppercase tracking-widest ${category.color} ${category.textColor} border border-white/20 shadow-sm`}>
