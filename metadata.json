@@ -1,0 +1,8 @@
+{
+  "name": "AirCare Taiwan",
+  "description": "即時空氣品質監控 App - 提供台灣各測站之即時空氣品質指標 (AQI)、PM2.5、PM10、溫度與濕度，支援 PWA 安裝與離線模式。",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
