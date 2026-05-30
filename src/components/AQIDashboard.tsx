@@ -6,9 +6,7 @@ import {
   Thermometer, 
   Droplets, 
   TrendingUp, 
-  RefreshCw, 
   Flame, 
-  MapPin, 
   HeartHandshake, 
   AlertCircle, 
   Check, 
@@ -71,41 +69,14 @@ export default function AQIDashboard({
     <div className="space-y-5 px-1 text-white" id="aqi-dashboard">
       
       {/* Top Station Info Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="p-2.5 rounded-2xl bg-white/10 text-white flex items-center justify-center border border-white/20 backdrop-blur-md shadow-lg">
-            <MapPin className="w-5 h-5 text-emerald-300" />
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <h2 className="text-2xl font-black text-white tracking-tight">{station.sitename}測站</h2>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-white/25 text-white border border-white/30 font-bold">
-                {station.county}
-              </span>
-            </div>
-            <p className="text-xs text-white/90 font-semibold tracking-wider flex items-center gap-1 mt-1">
-              {isUsingGps && gpsCoords ? (
-                <>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
-                  <span className="text-emerald-300 font-bold">📍 經緯定位：({gpsCoords.lat.toFixed(2)}°, {gpsCoords.lon.toFixed(2)}°) 附近</span>
-                </>
-              ) : (
-                "🏡 基於地區自選或內定預設"
-              )}
-            </p>
-          </div>
+      {isUsingGps && gpsCoords && (
+        <div className="flex items-center justify-start pb-2">
+          <p className="text-xs text-white/90 font-semibold tracking-wider flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
+            <span className="text-emerald-300 font-bold">📍 經緯定位：({gpsCoords.lat.toFixed(2)}°, {gpsCoords.lon.toFixed(2)}°) 附近</span>
+          </p>
         </div>
-
-        {/* Pulse sync button */}
-        <button
-          id="refresh-btn"
-          onClick={onRefresh}
-          disabled={refreshing}
-          className="p-2.5 rounded-2xl bg-white/10 hover:bg-white/25 text-white border border-white/20 active:scale-95 transition-all outline-none backdrop-blur-md shadow-lg cursor-pointer"
-        >
-          <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin text-emerald-400" : ""}`} />
-        </button>
-      </div>
+      )}
 
       {/* Large AQI Dial Widget */}
       <div className="flex flex-col items-center justify-center p-8 rounded-[2.5rem] glass-panel-premium relative overflow-hidden shadow-2xl border border-white/20">

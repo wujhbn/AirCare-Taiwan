@@ -10,15 +10,19 @@ import {
   PlusSquare, 
   AlertTriangle, 
   CheckCircle2, 
-  HelpCircle 
+  HelpCircle,
+  Sun,
+  Moon
 } from "lucide-react";
 import { StationData } from "../types";
 
 interface AlertBoardProps {
   currentStation: StationData | null;
+  isDarkMode?: boolean;
+  setIsDarkMode?: (dark: boolean) => void;
 }
 
-export default function AlertBoard({ currentStation }: AlertBoardProps) {
+export default function AlertBoard({ currentStation, isDarkMode = true, setIsDarkMode }: AlertBoardProps) {
   const [notificationStatus, setNotificationStatus] = useState<"default" | "granted" | "denied">("default");
   const [testTriggered, setTestTriggered] = useState(false);
   const [activeInstructionTab, setActiveInstructionTab] = useState<"ios" | "android">("ios");
@@ -115,6 +119,27 @@ export default function AlertBoard({ currentStation }: AlertBoardProps) {
           {isOnline ? "Live" : "Cached"}
         </span>
       </div>
+
+      {/* Visual Settings */}
+      {setIsDarkMode && (
+        <div className="p-4 rounded-3xl glass-panel flex items-center justify-between border border-white/20 shadow-xl">
+          <div className="flex items-center gap-3.5">
+            <div className="p-2.5 bg-white/10 rounded-2xl border border-white/15 shadow-inner">
+              {isDarkMode ? <Moon className="w-5 h-5 text-indigo-300" /> : <Sun className="w-5 h-5 text-amber-400" />}
+            </div>
+            <div>
+              <h3 className="font-black text-white text-base">視覺風格</h3>
+              <p className="text-xs text-white/70 mt-0.5 font-medium">{isDarkMode ? "深色模式 (Cosmic 護眼)" : "淺色模式 (清新明亮)"}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            className="px-4 py-2 rounded-full text-sm font-black transition-all cursor-pointer shadow-md bg-white/15 text-white/90 border border-white/20 hover:bg-white/25 active:scale-95 shrink-0"
+          >
+            切換模式
+          </button>
+        </div>
+      )}
 
       {/* Smart Air Notifications Config */}
       <div className="p-5 rounded-[2.2rem] glass-panel space-y-4 relative overflow-hidden border border-white/20 shadow-2xl">

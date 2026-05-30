@@ -14,7 +14,8 @@ import {
   Sun, 
   Moon, 
   Download,
-  AlertCircle
+  AlertCircle,
+  RefreshCw
 } from "lucide-react";
 
 const STATION_COORDINATES: Record<string, { lat: number; lon: number }> = {
@@ -71,7 +72,7 @@ const STATION_COORDINATES: Record<string, { lat: number; lon: number }> = {
 
 export default function App() {
   const [stations, setStations] = useState<StationData[]>([]);
-  const [selectedStationName, setSelectedStationName] = useState<string>("板橋");
+  const [selectedStationName, setSelectedStationName] = useState<string>("");
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<"dashboard" | "cities" | "trends" | "alerts">("dashboard");
   const [lastUpdated, setLastUpdated] = useState<string>("");
@@ -207,16 +208,20 @@ export default function App() {
       ];
     }
     
-    setStations(successfulData);
+    setStations(successfulData || []);
     const now = new Date();
     setLastUpdated(now.toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
     
     setRefreshing(false);
+    return successfulData || [];
   };
 
   // Setup periodic refresh and install event capturing
   useEffect(() => {
-    fetchStations();
+    fetchStations().then((fetchedStations) => {
+      // Auto-detect location on first load
+      detectAndSetClosestStation(fetchedStations);
+    });
 
     // Auto update every 5 minutes as requested
     const pollId = setInterval(() => {
@@ -239,12 +244,13 @@ export default function App() {
   }, []);
 
   // Geolocation-based station matching
-  const detectAndSetClosestStation = () => {
+  const detectAndSetClosestStation = (availableStations: StationData[] = stations) => {
     if (!navigator.geolocation) {
       const msg = "抱歉，您的裝置或瀏覽器不支援 GPS 地理定位服務。";
       setGpsStatus("error");
       setGpsErrorMessage(msg);
       triggerToast(msg, "error");
+      if (availableStations.length > 0) setSelectedStationName(availableStations[0].sitename);
       return;
     }
 
@@ -261,7 +267,7 @@ export default function App() {
         let closestStation: StationData | null = null;
         let minDistance = Infinity;
 
-        stations.forEach((station) => {
+        availableStations.forEach((station) => {
           const coords = STATION_COORDINATES[station.sitename];
           if (coords) {
             // Standard Euclidean distance squared mapping
@@ -284,6 +290,7 @@ export default function App() {
           setGpsStatus("error");
           setGpsErrorMessage("定位已讀取，但在資料庫中未能成功配對鄰接之專屬大氣觀測點。");
           triggerToast("定位已讀取，但附近無配對大氣測站資料。已還原預設。", "error");
+          if (availableStations.length > 0) setSelectedStationName(availableStations[0].sitename);
         }
         setDetectingLocation(false);
       },
@@ -301,6 +308,7 @@ export default function App() {
         setGpsErrorMessage(errorMsg);
         triggerToast(errorMsg, "error");
         setDetectingLocation(false);
+        if (availableStations.length > 0) setSelectedStationName(availableStations[0].sitename);
       },
       { enableHighAccuracy: true, timeout: 8000 }
     );
@@ -331,7 +339,7 @@ export default function App() {
       </div>
 
       {/* App Top Brand Header Bar with Safe Area adaptation */}
-      <header id="app-brand-header" className="relative z-10 flex items-center justify-between px-5 pt-[max(env(safe-area-inset-top),1.5rem)] pb-5 bg-slate-950/40 backdrop-blur-md border-b border-white/10 shadow-lg">
+      <header id="app-brand-header" className="relative z-10 flex items-center justify-between px-5 pt-[max(env(safe-area-inset-top),1.5rem)] pb-5">
         <div className="flex items-center gap-3">
           {/* Logo Brand Widget */}
           <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform shrink-0">
@@ -341,31 +349,40 @@ export default function App() {
           </div>
           <div>
             <h1 className="text-xl font-bold leading-tight tracking-tight text-white flex items-center gap-1.5">
-              AirCare <span className="text-xs bg-white/20 text-white px-2 py-0.5 rounded-full font-black border border-white/25">TW</span>
+              AirCare
             </h1>
-            <p className="text-xs text-white/70 uppercase tracking-widest font-semibold mt-1">智慧空氣守護者</p>
           </div>
         </div>
 
-        {/* Action icons */}
+        {/* Action icons / Station Info */}
         <div className="flex items-center gap-2.5">
+          {selectedStation && (
+            <div className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-xl border border-white/20">
+              <span className={`w-2.5 h-2.5 rounded-full shadow-sm ${
+                selectedStation.aqi <= 50 ? "bg-emerald-400" :
+                selectedStation.aqi <= 100 ? "bg-amber-400" :
+                selectedStation.aqi <= 150 ? "bg-orange-400" : "bg-red-400"
+              }`}></span>
+              <span className="text-sm font-bold text-white tracking-wider">{selectedStation.sitename}測站</span>
+            </div>
+          )}
+          
+          <button
+            onClick={() => fetchStations()}
+            disabled={refreshing}
+            className="p-2 rounded-xl bg-white/10 border border-white/20 text-white hover:text-white/80 hover:bg-white/15 outline-none active:scale-95 transition-all"
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin text-emerald-400" : ""}`} />
+          </button>
+
           {canInstall && (
             <button
               onClick={triggerNativeInstall}
-              className="flex items-center gap-1.5 bg-white text-emerald-700 font-bold text-sm px-4 py-2 rounded-full shadow-xl hover:scale-105 active:scale-95 transition-all"
+              className="flex items-center justify-center bg-white text-emerald-700 p-2 rounded-full shadow-xl hover:scale-105 active:scale-95 transition-all"
             >
-              <Download className="w-3.5 h-3.5" />
-              <span>安裝 App</span>
+              <Download className="w-4 h-4" />
             </button>
           )}
-
-          {/* Theme custom selector */}
-          <button
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            className="p-2 rounded-xl bg-white/10 border border-white/20 text-white hover:text-white/80 hover:bg-white/15 outline-none active:scale-95 transition-all"
-          >
-            {isDarkMode ? <Sun className="w-4 h-4 text-amber-300" /> : <Moon className="w-4 h-4 text-indigo-200" />}
-          </button>
         </div>
       </header>
 
@@ -409,6 +426,8 @@ export default function App() {
         {activeTab === "alerts" && (
           <AlertBoard
             currentStation={selectedStation}
+            isDarkMode={isDarkMode}
+            setIsDarkMode={setIsDarkMode}
           />
         )}
       </main>
@@ -468,7 +487,7 @@ export default function App() {
           }`}
         >
           <Bell className="w-6 h-6" />
-          <span className="text-xs font-bold">通報設定</span>
+          <span className="text-xs font-bold">設定</span>
           {activeTab === "alerts" && (
             <span className="absolute bottom-0 w-1 h-1 rounded-full bg-white shadow-md shadow-white"></span>
           )}
