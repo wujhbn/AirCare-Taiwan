@@ -30,10 +30,10 @@ export default function CitySelector({
   const [selectedRegion, setSelectedRegion] = useState<"all" | "north" | "central" | "south" | "east">("all");
 
   const regions = {
-    north: ["台北市", "新北市", "基隆市", "桃園市", "新竹市", "新竹縣", "宜蘭縣"],
-    central: ["苗栗縣", "台中市", "彰化縣", "南投縣", "雲林縣"],
-    south: ["嘉義市", "嘉義縣", "台南市", "高雄市", "屏東縣"],
-    east: ["花蓮縣", "台東縣", "澎湖縣", "金門縣", "連江縣"]
+    north: ["台北市", "臺北市", "新北市", "基隆市", "桃園市", "新竹市", "新竹縣", "宜蘭縣"],
+    central: ["苗栗縣", "台中市", "臺中市", "彰化縣", "南投縣", "雲林縣"],
+    south: ["嘉義市", "嘉義縣", "台南市", "臺南市", "高雄市", "屏東縣"],
+    east: ["花蓮縣", "台東縣", "臺東縣", "澎湖縣", "金門縣", "連江縣"]
   };
 
   const getStationRegion = (county: string): "north" | "central" | "south" | "east" => {
@@ -45,9 +45,13 @@ export default function CitySelector({
 
   const filteredStations = stations.filter(station => {
     // Search filter
+    const normalizedSearch = searchQuery.toLowerCase().replace(/台/g, '臺');
+    const normalizedSitename = station.sitename.toLowerCase().replace(/台/g, '臺');
+    const normalizedCounty = station.county.toLowerCase().replace(/台/g, '臺');
+    
     const matchesSearch = 
-      station.sitename.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      station.county.toLowerCase().includes(searchQuery.toLowerCase());
+      normalizedSitename.includes(normalizedSearch) ||
+      normalizedCounty.includes(normalizedSearch);
     
     // Region filter
     if (selectedRegion === "all") return matchesSearch;
