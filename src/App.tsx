@@ -284,10 +284,30 @@ export default function App() {
     setDetectingLocation(true);
     setGpsStatus("detecting");
     setGpsErrorMessage("");
-    triggerToast("正在讀取 GPS 衛星定位系統運作，請授權定位...", "info");
+    triggerToast("正在讀取 GPS 定位系統，請授權定位服務...", "info");
+
+    let isCallbackFired = false;
+
+    // Safety timeout: In case browser geolocation prompt is ignored/blocked by iframe without triggering callbacks
+    const safetyTimer = setTimeout(() => {
+      if (!isCallbackFired) {
+        isCallbackFired = true;
+        console.warn("Geolocation safety timeout triggered.");
+        const errorMsg = "定位讀取超時。因部分手機或瀏覽器安全規範，若正在使用 PWA 或是 Preview 內嵌模式，請確認手機設定已開放瀏覽器定位權限，或可點擊瀏覽器分享隨後選取「加入主畫面」(Install PWA) 運行能獲得最完整的定位支援！";
+        setGpsStatus("error");
+        setGpsErrorMessage(errorMsg);
+        triggerToast("地理定位讀取超時，已為您還原預設測站。", "error");
+        setDetectingLocation(false);
+        if (availableStations.length > 0) setSelectedStationName(availableStations[0].sitename);
+      }
+    }, 5500);
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        if (isCallbackFired) return;
+        isCallbackFired = true;
+        clearTimeout(safetyTimer);
+
         const { latitude, longitude } = position.coords;
         setGpsCoords({ lat: latitude, lon: longitude });
 
@@ -322,10 +342,14 @@ export default function App() {
         setDetectingLocation(false);
       },
       (error) => {
+        if (isCallbackFired) return;
+        isCallbackFired = true;
+        clearTimeout(safetyTimer);
+
         console.warn("Location fetch blocked:", error);
         let errorMsg = "GPS 定位失敗。";
         if (error.code === error.PERMISSION_DENIED) {
-          errorMsg = "您拒絕了定位權限。請於瀏覽器/手機設定中允許定位，並再按一次立即偵測！";
+          errorMsg = "您拒絕了定位權限。請於瀏覽器或手機設定中允許定位，並再按一次立即偵測！";
         } else if (error.code === error.POSITION_UNAVAILABLE) {
           errorMsg = "無法取得您的位置資訊，請檢查裝置的 GPS 定位是否已經開通。";
         } else if (error.code === error.TIMEOUT) {
@@ -337,7 +361,8 @@ export default function App() {
         setDetectingLocation(false);
         if (availableStations.length > 0) setSelectedStationName(availableStations[0].sitename);
       },
-      { enableHighAccuracy: true, timeout: 8000 }
+      // Using low accuracy (IP/Cell/WiFi triangulation) is extremely fast, works perfectly indoors and is highly compatible
+      { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 }
     );
   };
 
