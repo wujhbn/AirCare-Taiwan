@@ -25,6 +25,7 @@ interface AlertBoardProps {
 export default function AlertBoard({ currentStation, isDarkMode = true, setIsDarkMode }: AlertBoardProps) {
   const [notificationStatus, setNotificationStatus] = useState<"default" | "granted" | "denied">("default");
   const [testTriggered, setTestTriggered] = useState(false);
+  const [showAlertModal, setShowAlertModal] = useState(false);
   const [activeInstructionTab, setActiveInstructionTab] = useState<"ios" | "android">("ios");
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
@@ -106,12 +107,54 @@ export default function AlertBoard({ currentStation, isDarkMode = true, setIsDar
     }
   };
 
+  const playWarningBeep = () => {
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      const ctx = new AudioContextClass();
+      
+      const playTone = (freq1: number, freq2: number, startTime: number, duration: number) => {
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+
+        osc1.type = "sine";
+        osc1.frequency.setValueAtTime(freq1, startTime);
+        
+        osc2.type = "sine";
+        osc2.frequency.setValueAtTime(freq2, startTime);
+
+        gainNode.gain.setValueAtTime(0, startTime);
+        gainNode.gain.linearRampToValueAtTime(0.12, startTime + 0.05);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+        osc1.connect(gainNode);
+        osc2.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        osc1.start(startTime);
+        osc2.start(startTime);
+        osc1.stop(startTime + duration);
+        osc2.stop(startTime + duration);
+      };
+
+      playTone(880, 1100, ctx.currentTime, 0.35);
+      playTone(880, 1100, ctx.currentTime + 0.45, 0.35);
+    } catch (e) {
+      console.warn("Audio Context beep failed:", e);
+    }
+  };
+
   const triggerTestAlert = () => {
     if (!currentStation) return;
     
     // Simulate high pollution notification alert
     const title = `⚠️ 台灣空氣警戒 - ${currentStation.sitename}測站`;
     const message = `細懸浮微粒 (PM2.5) 濃度已達 ${currentStation.pm25} μg/m³，空氣品質屬於「${currentStation.status}」，請關閉窗戶，外出請配戴口罩！`;
+    
+    // Always trigger the warning audio and modal overlay immediately
+    playWarningBeep();
+    setShowAlertModal(true);
     
     showMockNotification(title, message);
   };
@@ -228,6 +271,93 @@ export default function AlertBoard({ currentStation, isDarkMode = true, setIsDar
         )}
       </div>
 
+      {/* Immersive Warning screen popup modal (空氣品質緊急警戒畫面) */}
+      {showAlertModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-sm overflow-hidden bg-slate-900/95 border-2 border-red-500/40 rounded-[2.2rem] shadow-[0_0_50px_rgba(239,68,68,0.4)] p-6 text-white flex flex-col gap-4 animate-scale-up">
+            
+            {/* Pulsing Light Alert Header */}
+            <div className="flex items-center gap-2.5 bg-red-500/15 border border-red-500/30 px-3.5 py-2 rounded-2xl text-red-400 font-extrabold text-xs tracking-wider uppercase animate-pulse">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444] animate-ping" />
+              <span>🚨 系統即時空氣特別預警 (測試)</span>
+            </div>
+
+            {/* Main Station info details */}
+            <div className="space-y-1 mt-1">
+              <span className="text-xs text-white/50 font-black tracking-widest block uppercase font-mono">
+                {currentStation?.county || "偵測測站"}
+              </span>
+              <h2 className="text-2xl font-black text-white tracking-tight leading-snug">
+                {currentStation?.sitename || "位置"}測站 ── 空氣不良警告
+              </h2>
+            </div>
+
+            {/* Visual metrics panel display */}
+            <div className="grid grid-cols-2 gap-3.5 bg-white/5 p-4 rounded-3xl border border-white/10 shadow-inner">
+              <div className="text-center p-2 border-r border-white/10 flex flex-col justify-center items-center">
+                <span className="text-[10px] text-white/50 block font-bold uppercase tracking-widest font-mono">AQI 氣質指數</span>
+                <span className="text-4xl font-black text-amber-400 mt-1 block">
+                  {currentStation?.aqi || "--"}
+                </span>
+                <span className="text-[10px] font-black text-white bg-amber-500/25 border border-amber-500/35 px-2.5 py-0.5 rounded-full mt-2 inline-block">
+                  {currentStation?.status || "普通"}
+                </span>
+              </div>
+              <div className="text-center p-2 flex flex-col justify-center items-center">
+                <span className="text-[10px] text-white/50 block font-bold uppercase tracking-widest font-mono">PM2.5 細懸浮微粒</span>
+                <span className="text-3xl font-black text-rose-300 mt-1 block font-mono">
+                  {currentStation?.pm25 || "--"}<span className="text-xs font-normal text-white/50 ml-1">μg</span>
+                </span>
+                <span className="text-[10px] text-white/40 block mt-2 font-mono">
+                  單位: μg/m³
+                </span>
+              </div>
+            </div>
+
+            {/* Safety guidelines text block */}
+            <div className="space-y-2.5">
+              <h4 className="text-xs font-black uppercase text-white/80 tracking-wider flex items-center gap-1.5">
+                <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                防護應變措施指引：
+              </h4>
+              <ul className="text-xs text-white/85 space-y-2 bg-red-500/5 p-3.5 rounded-2xl border border-red-500/10 font-medium leading-relaxed">
+                <li className="flex items-start gap-1.5">
+                  <span className="text-red-400 font-bold font-mono">·</span>
+                  <span>長輩、孩童、肺敏感患者建議減少戶外遠足或粗重活動。</span>
+                </li>
+                <li className="flex items-start gap-1.5">
+                  <span className="text-red-400 font-bold font-mono">·</span>
+                  <span>外出人員應正確佩帶好口罩，返回室內後適當清洗。</span>
+                </li>
+                <li className="flex items-start gap-1.5">
+                  <span className="text-red-400 font-bold font-mono">·</span>
+                  <span>建議合閉門窗，啟動室內防霾空氣淨化器。</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Instruction tooltip about native OS push limitation */}
+            <div className="text-[10px] bg-sky-500/10 p-3.5 rounded-2.5xl border border-sky-500/20 text-white/70 space-y-1.5">
+              <p className="font-bold text-sky-200 flex items-center gap-1">
+                <span>💡 手機沒看到系統橫幅通知？</span>
+              </p>
+              <p className="leading-relaxed">
+                因 iOS Safari 與 Android 行動端安全規範，
+                若要在<strong>關閉網頁後仍即時接收警報</strong>，
+                請點擊瀏覽器分享選單，點選<strong>「加入主畫面」(Install PWA)</strong> 重新開啟 APP，再點選「啟用通知」允許系統通知權限。
+              </p>
+            </div>
+
+            {/* Close Button element */}
+            <button
+              onClick={() => setShowAlertModal(false)}
+              className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 active:scale-97 text-white font-extrabold text-center text-sm tracking-wider transition-all shadow-[0_4px_15px_rgba(239,68,68,0.3)] cursor-pointer mt-1"
+            >
+              確認指引，關閉警報
+            </button>
+          </div>
+        </div>
+      )}
 
     </div>
   );
