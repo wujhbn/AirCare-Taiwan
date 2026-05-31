@@ -272,15 +272,6 @@ export default function App() {
 
   // Geolocation-based station matching
   const detectAndSetClosestStation = (availableStations: StationData[] = stations) => {
-    if (!navigator.geolocation) {
-      const msg = "抱歉，您的裝置或瀏覽器不支援 GPS 地理定位服務。";
-      setGpsStatus("error");
-      setGpsErrorMessage(msg);
-      triggerToast(msg, "error");
-      if (availableStations.length > 0) setSelectedStationName(availableStations[0].sitename);
-      return;
-    }
-
     setDetectingLocation(true);
     setGpsStatus("detecting");
     setGpsErrorMessage("");
@@ -288,19 +279,120 @@ export default function App() {
 
     let isCallbackFired = false;
 
-    // Safety timeout: In case browser geolocation prompt is ignored/blocked by iframe without triggering callbacks
+    // Helper to fall back to IP-based Geolocation if GPS fails, gets blocked, or is not supported
+    const tryIpGeolocation = async () => {
+      const fetchWithTimeout = async (url: string, timeout = 2500): Promise<any> => {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeout);
+        try {
+          const response = await fetch(url, { signal: controller.signal });
+          clearTimeout(id);
+          if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+          return await response.json();
+        } catch (e) {
+          clearTimeout(id);
+          throw e;
+        }
+      };
+
+      try {
+        triggerToast("GPS 未能回應，正在啟用網際網路 IP 備用模糊定位...", "info");
+        
+        let latitude: number | null = null;
+        let longitude: number | null = null;
+        
+        // Attempt 1: Try FreeIPAPI (highly reliable, CORS enabled, HTTPS)
+        try {
+          console.log("Trying Attempt 1: Free IP API");
+          const data = await fetchWithTimeout("https://freeipapi.com/api/json", 2500);
+          if (data && typeof data.latitude === "number" && typeof data.longitude === "number") {
+            latitude = data.latitude;
+            longitude = data.longitude;
+            console.log("Free IP API success:", latitude, longitude);
+          }
+        } catch (err) {
+          console.warn("Free IP API failed, seeking secondary fallback:", err);
+        }
+        
+        // Attempt 2: Try IPAPI.co
+        if (latitude === null || longitude === null) {
+          try {
+            console.log("Trying Attempt 2: IPAPI.co");
+            const data = await fetchWithTimeout("https://ipapi.co/json/", 2500);
+            if (data && data.latitude && data.longitude) {
+              latitude = parseFloat(data.latitude);
+              longitude = parseFloat(data.longitude);
+              console.log("IPAPI.co success:", latitude, longitude);
+            }
+          } catch (err) {
+            console.warn("IPAPI.co failed:", err);
+          }
+        }
+
+        // Final Resolution
+        if (latitude !== null && longitude !== null) {
+          setGpsCoords({ lat: latitude, lon: longitude });
+
+          let closestStation: StationData | null = null;
+          let minDistance = Infinity;
+
+          availableStations.forEach((station) => {
+            const coords = STATION_COORDINATES[station.sitename];
+            if (coords) {
+              const dist = Math.pow(coords.lat - latitude, 2) + Math.pow(coords.lon - longitude, 2);
+              if (dist < minDistance) {
+                minDistance = dist;
+                closestStation = station;
+              }
+            }
+          });
+
+          if (closestStation) {
+            const matchedName = (closestStation as StationData).sitename;
+            setSelectedStationName(matchedName);
+            setIsUsingGps(true);
+            setGpsStatus("success");
+            triggerToast(`📍 備用 IP 定位成功！已自動切換至最近「${matchedName}」測站`, "success");
+            setActiveTab("dashboard");
+          } else {
+            setGpsStatus("error");
+            setGpsErrorMessage("備用 IP 定位已讀取，但附近找不到對應大氣測站資料。");
+            triggerToast("IP 定位已讀取，但附近找不到對應大氣測站資料。", "error");
+            if (availableStations.length > 0 && !selectedStationName) {
+              setSelectedStationName(availableStations[0].sitename);
+            }
+          }
+        } else {
+          throw new Error("All IP Geolocation APIs failed or timed out");
+        }
+      } catch (err) {
+        console.error("IP Geolocation fallback failed entirely:", err);
+        const failMsg = "定位權限受阻且備用定位讀取失敗。請手動在「地區觀測」選單挑選！";
+        setGpsStatus("error");
+        setGpsErrorMessage(failMsg);
+        triggerToast("無法讀取您的位置，請直接點擊下方「地區觀測」手動選取測站喔！", "error");
+        if (availableStations.length > 0 && !selectedStationName) {
+          setSelectedStationName(availableStations[0].sitename);
+        }
+      } finally {
+        setDetectingLocation(false);
+      }
+    };
+
+    if (!navigator.geolocation) {
+      console.warn("Navigator geolocation is not supported in this environment, using IP fallback.");
+      tryIpGeolocation();
+      return;
+    }
+
+    // Safety timeout: In case browser geolocation prompt is ignored/blocked by iframe/webview without triggering callbacks
     const safetyTimer = setTimeout(() => {
       if (!isCallbackFired) {
         isCallbackFired = true;
-        console.warn("Geolocation safety timeout triggered.");
-        const errorMsg = "定位讀取超時。因部分手機或瀏覽器安全規範，若正在使用 PWA 或是 Preview 內嵌模式，請確認手機設定已開放瀏覽器定位權限，或可點擊瀏覽器分享隨後選取「加入主畫面」(Install PWA) 運行能獲得最完整的定位支援！";
-        setGpsStatus("error");
-        setGpsErrorMessage(errorMsg);
-        triggerToast("地理定位讀取超時，已為您還原預設測站。", "error");
-        setDetectingLocation(false);
-        if (availableStations.length > 0) setSelectedStationName(availableStations[0].sitename);
+        console.warn("Geolocation safety timeout triggered, falling back to IP lookup.");
+        tryIpGeolocation();
       }
-    }, 5500);
+    }, 4000);
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -346,23 +438,12 @@ export default function App() {
         isCallbackFired = true;
         clearTimeout(safetyTimer);
 
-        console.warn("Location fetch blocked:", error);
-        let errorMsg = "GPS 定位失敗。";
-        if (error.code === error.PERMISSION_DENIED) {
-          errorMsg = "您拒絕了定位權限。請於瀏覽器或手機設定中允許定位，並再按一次立即偵測！";
-        } else if (error.code === error.POSITION_UNAVAILABLE) {
-          errorMsg = "無法取得您的位置資訊，請檢查裝置的 GPS 定位是否已經開通。";
-        } else if (error.code === error.TIMEOUT) {
-          errorMsg = "讀取 GPS 訊號逾時。請移動到收訊優良的區域，或是手動挑選縣市觀測！";
-        }
-        setGpsStatus("error");
-        setGpsErrorMessage(errorMsg);
-        triggerToast(errorMsg, "error");
-        setDetectingLocation(false);
-        if (availableStations.length > 0) setSelectedStationName(availableStations[0].sitename);
+        console.warn("Location fetch blocked, fallback to IP:", error);
+        // Do not fail immediately, trigger the friendly IP geolocation fallback!
+        tryIpGeolocation();
       },
       // Using low accuracy (IP/Cell/WiFi triangulation) is extremely fast, works perfectly indoors and is highly compatible
-      { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 }
+      { enableHighAccuracy: false, timeout: 3500, maximumAge: 300000 }
     );
   };
 
