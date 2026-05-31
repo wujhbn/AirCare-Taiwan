@@ -65,13 +65,40 @@ export default function AlertBoard({ currentStation, isDarkMode = true, setIsDar
     }
   };
 
-  const showMockNotification = (title: string, body: string) => {
+  const showMockNotification = async (title: string, body: string) => {
     if ("Notification" in window && Notification.permission === "granted") {
-      new Notification(title, {
-        body,
-        icon: "/icons/icon-192.png",
-        tag: "aircare-alert",
-      });
+      // 1. Try displaying via registered Service Worker (standard & mandatory on mobile devices like Android Chrome & iOS PWA)
+      if ("serviceWorker" in navigator) {
+        try {
+          const registration = await navigator.serviceWorker.ready;
+          if (registration && "showNotification" in registration) {
+            await registration.showNotification(title, {
+              body,
+              icon: "/icons/icon-192.png",
+              badge: "/icons/icon-192.png",
+              tag: "aircare-alert",
+              vibrate: [200, 100, 200], // Haptic vibration on mobile
+            } as any);
+            return;
+          }
+        } catch (swErr) {
+          console.warn("ServiceWorker showNotification failed, trying fallback:", swErr);
+        }
+      }
+
+      // 2. Standard Desktop / Fallback constructor
+      try {
+        new Notification(title, {
+          body,
+          icon: "/icons/icon-192.png",
+          tag: "aircare-alert",
+        });
+      } catch (err) {
+        console.warn("Standard Notification constructor failed:", err);
+        // If everything fails (e.g., standard iOS Safari inside in-app browser), trigger the styled in-app banner fallback
+        setTestTriggered(true);
+        setTimeout(() => setTestTriggered(false), 5000);
+      }
     } else {
       // In-app fallback prompt
       setTestTriggered(true);
