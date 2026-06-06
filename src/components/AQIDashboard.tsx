@@ -18,17 +18,13 @@ interface AQIDashboardProps {
   onRefresh: () => void;
   refreshing: boolean;
   lastUpdated: string;
-  isUsingGps?: boolean;
-  gpsCoords?: { lat: number; lon: number } | null;
 }
 
 export default function AQIDashboard({
   station,
   onRefresh,
   refreshing,
-  lastUpdated,
-  isUsingGps,
-  gpsCoords
+  lastUpdated
 }: AQIDashboardProps) {
   if (!station) {
     // Elegant Skeleton Loading state
@@ -68,16 +64,6 @@ export default function AQIDashboard({
   return (
     <div className="space-y-5 px-1 text-white" id="aqi-dashboard">
       
-      {/* Top Station Info Header */}
-      {isUsingGps && gpsCoords && (
-        <div className="flex items-center justify-start pb-2">
-          <p className="text-xs text-white/90 font-semibold tracking-wider flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
-            <span className="text-emerald-300 font-bold">📍 經緯定位：({gpsCoords.lat.toFixed(2)}°, {gpsCoords.lon.toFixed(2)}°) 附近</span>
-          </p>
-        </div>
-      )}
-
       {/* Large AQI Dial Widget */}
       <div className="flex flex-col items-center justify-center p-8 rounded-[2.5rem] glass-panel-premium relative overflow-hidden shadow-2xl border border-white/20">
         {/* Accent dynamic glow spot background */}

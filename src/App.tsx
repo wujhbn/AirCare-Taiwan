@@ -42,6 +42,7 @@ const STATION_COORDINATES: Record<string, { lat: number; lon: number }> = {
   "沙鹿": { lat: 24.22, lon: 120.56 },
   "台中": { lat: 24.15, lon: 120.68 },
   "大里": { lat: 24.10, lon: 120.68 },
+  "臺中": { lat: 24.15, lon: 120.68 },
   "彰化": { lat: 24.08, lon: 120.54 },
   "二林": { lat: 23.90, lon: 120.37 },
   "南投": { lat: 23.91, lon: 120.68 },
@@ -53,6 +54,7 @@ const STATION_COORDINATES: Record<string, { lat: number; lon: number }> = {
   "新營": { lat: 23.31, lon: 120.31 },
   "安南": { lat: 23.04, lon: 120.18 },
   "台南": { lat: 22.98, lon: 120.20 },
+  "臺南": { lat: 22.98, lon: 120.20 },
   "美濃": { lat: 22.90, lon: 120.53 },
   "左營": { lat: 22.67, lon: 120.30 },
   "前金": { lat: 22.62, lon: 120.29 },
@@ -65,6 +67,7 @@ const STATION_COORDINATES: Record<string, { lat: number; lon: number }> = {
   "冬山": { lat: 24.64, lon: 121.79 },
   "花蓮": { lat: 23.97, lon: 121.60 },
   "台東": { lat: 22.75, lon: 121.15 },
+  "臺東": { lat: 22.75, lon: 121.15 },
   "澎湖": { lat: 23.56, lon: 119.56 },
   "金門": { lat: 24.43, lon: 118.36 },
   "馬祖": { lat: 26.16, lon: 119.92 }
@@ -76,16 +79,10 @@ export default function App() {
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<"dashboard" | "cities" | "trends" | "alerts">("dashboard");
   const [lastUpdated, setLastUpdated] = useState<string>("");
-  const [detectingLocation, setDetectingLocation] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true); // Default to gorgeous dark / ambient slate theme
   const [installPromptEvent, setInstallPromptEvent] = useState<any>(null);
   const [canInstall, setCanInstall] = useState(false);
 
-  // High fidelity GPS tracking state variables
-  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lon: number } | null>(null);
-  const [gpsStatus, setGpsStatus] = useState<"idle" | "detecting" | "success" | "error">("idle");
-  const [gpsErrorMessage, setGpsErrorMessage] = useState<string>("");
-  const [isUsingGps, setIsUsingGps] = useState<boolean>(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
 
   const triggerToast = (message: string, type: "success" | "error" | "info" = "info") => {
@@ -241,7 +238,7 @@ export default function App() {
   // Setup periodic refresh and install event capturing
   useEffect(() => {
     fetchStations().then((fetchedStations) => {
-      // Set to Tainan default since user mentioned their GPS is not accurate and they are near Tainan
+      // Set to Tainan default since user is in Tainan
       const defaultSt = fetchedStations.find(s => s.sitename === "臺南" || s.sitename === "台南");
       if (defaultSt) {
         setSelectedStationName(defaultSt.sitename);
@@ -270,183 +267,6 @@ export default function App() {
     };
   }, []);
 
-  // Geolocation-based station matching
-  const detectAndSetClosestStation = (availableStations: StationData[] = stations) => {
-    setDetectingLocation(true);
-    setGpsStatus("detecting");
-    setGpsErrorMessage("");
-    triggerToast("正在讀取 GPS 定位系統，請授權定位服務...", "info");
-
-    let isCallbackFired = false;
-
-    // Helper to fall back to IP-based Geolocation if GPS fails, gets blocked, or is not supported
-    const tryIpGeolocation = async () => {
-      const fetchWithTimeout = async (url: string, timeout = 2500): Promise<any> => {
-        const controller = new AbortController();
-        const id = setTimeout(() => controller.abort(), timeout);
-        try {
-          const response = await fetch(url, { signal: controller.signal });
-          clearTimeout(id);
-          if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-          return await response.json();
-        } catch (e) {
-          clearTimeout(id);
-          throw e;
-        }
-      };
-
-      try {
-        triggerToast("GPS 未能回應，正在啟用網際網路 IP 備用模糊定位...", "info");
-        
-        let latitude: number | null = null;
-        let longitude: number | null = null;
-        
-        // Attempt 1: Try FreeIPAPI (highly reliable, CORS enabled, HTTPS)
-        try {
-          console.log("Trying Attempt 1: Free IP API");
-          const data = await fetchWithTimeout("https://freeipapi.com/api/json", 2500);
-          if (data && typeof data.latitude === "number" && typeof data.longitude === "number") {
-            latitude = data.latitude;
-            longitude = data.longitude;
-            console.log("Free IP API success:", latitude, longitude);
-          }
-        } catch (err) {
-          console.warn("Free IP API failed, seeking secondary fallback:", err);
-        }
-        
-        // Attempt 2: Try IPAPI.co
-        if (latitude === null || longitude === null) {
-          try {
-            console.log("Trying Attempt 2: IPAPI.co");
-            const data = await fetchWithTimeout("https://ipapi.co/json/", 2500);
-            if (data && data.latitude && data.longitude) {
-              latitude = parseFloat(data.latitude);
-              longitude = parseFloat(data.longitude);
-              console.log("IPAPI.co success:", latitude, longitude);
-            }
-          } catch (err) {
-            console.warn("IPAPI.co failed:", err);
-          }
-        }
-
-        // Final Resolution
-        if (latitude !== null && longitude !== null) {
-          setGpsCoords({ lat: latitude, lon: longitude });
-
-          let closestStation: StationData | null = null;
-          let minDistance = Infinity;
-
-          availableStations.forEach((station) => {
-            const coords = STATION_COORDINATES[station.sitename];
-            if (coords) {
-              const dist = Math.pow(coords.lat - latitude, 2) + Math.pow(coords.lon - longitude, 2);
-              if (dist < minDistance) {
-                minDistance = dist;
-                closestStation = station;
-              }
-            }
-          });
-
-          if (closestStation) {
-            const matchedName = (closestStation as StationData).sitename;
-            setSelectedStationName(matchedName);
-            setIsUsingGps(true);
-            setGpsStatus("success");
-            triggerToast(`📍 備用 IP 定位成功！已自動切換至最近「${matchedName}」測站`, "success");
-            setActiveTab("dashboard");
-          } else {
-            setGpsStatus("error");
-            setGpsErrorMessage("備用 IP 定位已讀取，但附近找不到對應大氣測站資料。");
-            triggerToast("IP 定位已讀取，但附近找不到對應大氣測站資料。", "error");
-            if (availableStations.length > 0 && !selectedStationName) {
-              setSelectedStationName(availableStations[0].sitename);
-            }
-          }
-        } else {
-          throw new Error("All IP Geolocation APIs failed or timed out");
-        }
-      } catch (err) {
-        console.error("IP Geolocation fallback failed entirely:", err);
-        const failMsg = "定位權限受阻且備用定位讀取失敗。請手動在「地區觀測」選單挑選！";
-        setGpsStatus("error");
-        setGpsErrorMessage(failMsg);
-        triggerToast("無法讀取您的位置，請直接點擊下方「地區觀測」手動選取測站喔！", "error");
-        if (availableStations.length > 0 && !selectedStationName) {
-          setSelectedStationName(availableStations[0].sitename);
-        }
-      } finally {
-        setDetectingLocation(false);
-      }
-    };
-
-    if (!navigator.geolocation) {
-      console.warn("Navigator geolocation is not supported in this environment, using IP fallback.");
-      tryIpGeolocation();
-      return;
-    }
-
-    // Safety timeout: In case browser geolocation prompt is ignored/blocked by iframe/webview without triggering callbacks
-    const safetyTimer = setTimeout(() => {
-      if (!isCallbackFired) {
-        isCallbackFired = true;
-        console.warn("Geolocation safety timeout triggered, falling back to IP lookup.");
-        tryIpGeolocation();
-      }
-    }, 4000);
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        if (isCallbackFired) return;
-        isCallbackFired = true;
-        clearTimeout(safetyTimer);
-
-        const { latitude, longitude } = position.coords;
-        setGpsCoords({ lat: latitude, lon: longitude });
-
-        let closestStation: StationData | null = null;
-        let minDistance = Infinity;
-
-        availableStations.forEach((station) => {
-          const coords = STATION_COORDINATES[station.sitename];
-          if (coords) {
-            // Standard Euclidean distance squared mapping
-            const dist = Math.pow(coords.lat - latitude, 2) + Math.pow(coords.lon - longitude, 2);
-            if (dist < minDistance) {
-              minDistance = dist;
-              closestStation = station;
-            }
-          }
-        });
-
-        if (closestStation) {
-          const matchedName = (closestStation as StationData).sitename;
-          setSelectedStationName(matchedName);
-          setIsUsingGps(true);
-          setGpsStatus("success");
-          triggerToast(`📍 定位配對成功！已自動切換至最近「${matchedName}」測站`, "success");
-          setActiveTab("dashboard");
-        } else {
-          setGpsStatus("error");
-          setGpsErrorMessage("定位已讀取，但在資料庫中未能成功配對鄰接之專屬大氣觀測點。");
-          triggerToast("定位已讀取，但附近無配對大氣測站資料。已還原預設。", "error");
-          if (availableStations.length > 0) setSelectedStationName(availableStations[0].sitename);
-        }
-        setDetectingLocation(false);
-      },
-      (error) => {
-        if (isCallbackFired) return;
-        isCallbackFired = true;
-        clearTimeout(safetyTimer);
-
-        console.warn("Location fetch blocked, fallback to IP:", error);
-        // Do not fail immediately, trigger the friendly IP geolocation fallback!
-        tryIpGeolocation();
-      },
-      // Using low accuracy (IP/Cell/WiFi triangulation) is extremely fast, works perfectly indoors and is highly compatible
-      { enableHighAccuracy: false, timeout: 3500, maximumAge: 300000 }
-    );
-  };
-
   // Launch browser-native install banner
   const triggerNativeInstall = async () => {
     if (!installPromptEvent) return;
@@ -472,7 +292,7 @@ export default function App() {
       </div>
 
       {/* App Top Brand Header Bar with Safe Area adaptation */}
-      <header id="app-brand-header" className="relative z-10 flex items-center justify-between px-5 pt-[max(env(safe-area-inset-top),1.5rem)] pb-5">
+      <header id="app-brand-header" className="relative z-50 flex items-center justify-between px-5 pt-[max(env(safe-area-inset-top),1.5rem)] pb-5">
         <div className="flex items-center gap-3">
           {/* Logo Brand Widget */}
           <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform shrink-0">
@@ -490,24 +310,71 @@ export default function App() {
         {/* Action icons / Station Info */}
         <div className="flex items-center gap-2.5">
           {selectedStation && (
-            <div className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-xl border border-white/20">
-              <span className={`w-2.5 h-2.5 rounded-full shadow-sm ${
-                selectedStation.aqi <= 50 ? "bg-emerald-400" :
-                selectedStation.aqi <= 100 ? "bg-amber-400" :
-                selectedStation.aqi <= 150 ? "bg-orange-400" : "bg-red-400"
-              }`}></span>
-              <span className="text-sm font-bold text-white tracking-wider">{selectedStation.sitename}測站</span>
+            <div className="relative">
+              <button
+                onClick={() => {
+                  const el = document.getElementById("station-desktop-dropdown");
+                  if (el) {
+                    el.classList.toggle("hidden");
+                  }
+                }}
+                className="appearance-none flex items-center justify-between gap-1.5 pl-8 pr-3 py-1.5 rounded-xl bg-white/10 border border-white/20 text-white font-bold tracking-wider text-sm outline-none cursor-pointer focus:ring-2 focus:ring-emerald-400 transition-all hover:bg-white/15 w-[125px]"
+              >
+                <div className="overflow-hidden text-ellipsis whitespace-nowrap">
+                  {selectedStation.sitename}測站
+                </div>
+                <div className="text-white/70 flex-shrink-0">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+              </button>
+              
+              {/* Custom Dropdown Menu */}
+              <div 
+                id="station-desktop-dropdown"
+                className="hidden absolute top-full right-0 mt-2 w-36 max-h-[300px] overflow-y-auto bg-gray-900/95 backdrop-blur-3xl border border-white/20 rounded-2xl shadow-2xl z-50 flex flex-col py-1 pointer-events-auto"
+              >
+                {/* Close overlay */}
+                <div 
+                  className="fixed inset-0 z-[-1]" 
+                  onClick={() => document.getElementById("station-desktop-dropdown")?.classList.add("hidden")}
+                ></div>
+                {stations.map((st) => (
+                  <button
+                    key={st.sitename}
+                    onClick={() => {
+                      setSelectedStationName(st.sitename);
+                      setActiveTab("dashboard");
+                      document.getElementById("station-desktop-dropdown")?.classList.add("hidden");
+                    }}
+                    className={`text-left px-4 py-2.5 text-sm font-bold transition-all ${
+                      selectedStation.sitename === st.sitename 
+                        ? "bg-emerald-500/20 text-emerald-300" 
+                        : "text-white/90 hover:bg-white/10 hover:text-white"
+                    }`}
+                  >
+                    <span 
+                      className={`inline-block mr-2 rounded-full transition-all ${
+                        selectedStation.sitename === st.sitename
+                          ? "w-2.5 h-2.5 bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"
+                          : "w-1.5 h-1.5 bg-white/30"
+                      }`}
+                    ></span>
+                    {st.sitename}測站
+                  </button>
+                ))}
+              </div>
+
+              {/* Status color dot */}
+              <div
+                className={`absolute left-3 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full shadow-sm pointer-events-none ${
+                  selectedStation.aqi <= 50 ? "bg-emerald-400" :
+                  selectedStation.aqi <= 100 ? "bg-amber-400" :
+                  selectedStation.aqi <= 150 ? "bg-orange-400" : "bg-red-400"
+                }`}
+              ></div>
             </div>
           )}
           
-          <button
-            onClick={() => fetchStations()}
-            disabled={refreshing}
-            className="p-2 rounded-xl bg-white/10 border border-white/20 text-white hover:text-white/80 hover:bg-white/15 outline-none active:scale-95 transition-all"
-          >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin text-emerald-400" : ""}`} />
-          </button>
-
           {canInstall && (
             <button
               onClick={triggerNativeInstall}
@@ -527,8 +394,6 @@ export default function App() {
             onRefresh={() => fetchStations()}
             refreshing={refreshing}
             lastUpdated={lastUpdated}
-            isUsingGps={isUsingGps}
-            gpsCoords={gpsCoords}
           />
         )}
 
@@ -538,15 +403,8 @@ export default function App() {
             selectedStation={selectedStation}
             onSelectStation={(st) => {
               setSelectedStationName(st.sitename);
-              setIsUsingGps(false); // Reset GPS mode if manually selection made
               setActiveTab("dashboard");
             }}
-            onDetectLocation={detectAndSetClosestStation}
-            detectingLocation={detectingLocation}
-            gpsCoords={gpsCoords}
-            gpsStatus={gpsStatus}
-            gpsErrorMessage={gpsErrorMessage}
-            isUsingGps={isUsingGps}
           />
         )}
 
